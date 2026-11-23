@@ -1,0 +1,25 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+      - name: Run the tests
+        shell: pwsh
+        run: ./Test-Demo.ps1 -OutDir out-test
+      - name: Run the two steps as the README names them
+        shell: pwsh
+        run: |
+          ./Get-TenantHygieneFindings.ps1 -UsersCsv users.synthetic.csv -SkusCsv skus.synthetic.csv -AsOf 2026-11-21 -OutDir out-findings
+          ./New-ManagerBrief.ps1 -SummaryJson out-findings/findings-summary.json -UsersCsv users.synthetic.csv -OutDir out-brief

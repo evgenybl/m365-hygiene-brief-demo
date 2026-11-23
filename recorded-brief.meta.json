@@ -1,0 +1,10 @@
+{
+  "model": "claude-haiku-5-5",
+  "recorded_on": "2026-11-23",
+  "route": "a Claude Code subagent on that model, given the request text as its whole prompt; both answers are saved unedited",
+  "request_sha256": "12363a8e5f91e572a60ea8d0beb5397eac8a7969bace6f5d1917612caa2d1fea",
+  "answers": {
+    "recorded-brief.md": "second answer, accepted by the checks",
+    "recorded-brief-rejected.md": "first answer, rejected by the figure check"
+  }
+}

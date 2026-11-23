@@ -1,0 +1,19 @@
+Microsoft 365 hygiene check: summary as of {as_of}
+
+{users_checked} accounts were checked. This text was produced from the data itself, without an AI tool, because the tool's text did not pass the checks.
+
+Security:
+- Administrators without multi-factor authentication: {R3}
+- Guests with no sign-in for more than {stale_days} days, or never: {R4}
+
+Cost:
+- Enabled accounts with a licence and no sign-in for more than {stale_days} days: {R1}
+- Disabled accounts that still hold a licence: {R2}
+- Licensed accounts that never signed in and were created more than {grace_days} days ago: {R5}
+
+Monthly cost that can be reclaimed: {reclaim} units. These are units invented for the demo, not real prices.
+
+Your decisions:
+- Turn on multi-factor authentication for every administrator? Yes / No
+- Remove the guests who have not signed in? Yes / No
+- Send the unused licences for review and return? Yes / No

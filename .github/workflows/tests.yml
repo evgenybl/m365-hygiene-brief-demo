@@ -53,9 +53,22 @@ jobs:
           LC_ALL: de_DE.UTF-8
         run: |
           "culture $([cultureinfo]::CurrentCulture.Name) | time zone $([TimeZoneInfo]::Local.Id) | now $([datetime]::Now.ToString('o'))"
+          if ([cultureinfo]::CurrentCulture.Name -ne 'de-DE') { 'the culture is not de-DE: this step would prove nothing'; exit 1 }
+          if ([TimeZoneInfo]::Local.Id -ne 'Pacific/Kiritimati') { 'the time zone is not Pacific/Kiritimati: this step would prove nothing'; exit 1 }
           ./Update-Examples.ps1
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --exit-code -- examples
           if ($LASTEXITCODE -ne 0) { exit 1 }
           $extra = git status --porcelain -- examples
           if ($extra) { $extra; exit 1 }
+
+      - name: The tests again, under a culture with a decimal comma (de-DE)
+        if: runner.os == 'Linux'
+        shell: pwsh
+        env:
+          LANG: de_DE.UTF-8
+          LC_ALL: de_DE.UTF-8
+        run: |
+          "culture $([cultureinfo]::CurrentCulture.Name) | decimal separator $([cultureinfo]::CurrentCulture.NumberFormat.NumberDecimalSeparator)"
+          if ([cultureinfo]::CurrentCulture.NumberFormat.NumberDecimalSeparator -ne ',') { 'the culture has no decimal comma: this step would prove nothing'; exit 1 }
+          ./Test-Demo.ps1

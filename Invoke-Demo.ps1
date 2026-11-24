@@ -7,12 +7,14 @@
 .DESCRIPTION
     The story, on data/ (an invented tenant, as of 2026-11-21):
       1 findings   Get-TenantHygieneFindings.ps1: the eight rules, the administrator's file, the summary
-      2 brief      New-ManagerBrief.ps1 with the recorded answer recordings/brief.recorded.md (labelled as its meta file earns)
+      2 brief      New-ManagerBrief.ps1 with its default answer, recordings/brief.constructed.md, written by hand to the
+                   request and labelled "Constructed, not from a model" (as its meta file earns)
       3 decisions  Set-BriefDecision.ps1: five answers typed for an invented manager, one decision left open
       4 work list  New-AdminWorklist.ps1: the accounts and items of the decisions answered Yes
       5 pages      New-HygieneReport.ps1: the manager's page and the administrator's page
-    It ends with a table: each rule, its count, its decision, the answer, and what reached the work list. The dates
-    and times are fixed, so the output is the same on every day, in every time zone and every culture.
+    It ends with a table: each rule, its count, its decision, the answer (with the number of answers when there is
+    more than one), and what reached the work list. The dates and times are fixed, so the output is the same on every
+    day, in every time zone and every culture.
 
     -Case runs one case of the failure gallery instead (or "all" of them), each into its own folder:
       clean-tenant         a tenant with nothing to find: every count is 0 and no decision is asked
@@ -24,7 +26,8 @@
       collector-throttled  the collector against the local mock, which answers 429 once: waited for, then completed
       collector-403        the collector against a mock that answers 403: stopped, nothing written
       model-500            the live model path against a mock that answers 500: stopped, nothing written
-    The mocks run on this computer only (lib/LocalMock.ps1); nothing leaves it.
+    The mocks run on this computer only (lib/LocalMock.ps1); nothing leaves it. The collector, Export-TenantSnapshot.ps1,
+    is labelled: Mock: written from Microsoft's documentation, tested against a local mock, never run against a tenant.
 
     Each step runs in a child process under the culture of this run (lib/Invoke-Step.ps1). The exit code is 0 when
     every step, or every case, ended as expected.
@@ -52,6 +55,7 @@ $data = Join-Path $here 'data'
 $users = Join-Path $data 'users.synthetic.csv'
 $skus = Join-Path $data 'skus.synthetic.csv'
 $policies = Join-Path $data 'policies.synthetic.csv'
+$tenant = Join-Path $data 'tenant.synthetic.csv'
 $script:printed = [System.Collections.Generic.List[string]]::new()
 # A printed line goes straight to standard output, so that a function's return value is only what it returns.
 function Say([string] $Line) { $script:printed.Add($Line); [Console]::Out.WriteLine($Line) }
@@ -83,7 +87,7 @@ function Invoke-Story([string] $Dir) {
     $f = Join-Path $Dir 'findings'; $b = Join-Path $Dir 'brief'; $w = Join-Path $Dir 'worklist'; $p = Join-Path $Dir 'pages'
     $ok = $true
     Say ('Microsoft 365 hygiene demo: synthetic data, as of {0}' -f $asOf)
-    $r = Invoke-DemoStep 'Get-TenantHygieneFindings.ps1' @('-UsersCsv', $users, '-SkusCsv', $skus, '-PoliciesCsv', $policies, '-AsOf', $asOf, '-OutDir', $f)
+    $r = Invoke-DemoStep 'Get-TenantHygieneFindings.ps1' @('-UsersCsv', $users, '-SkusCsv', $skus, '-PoliciesCsv', $policies, '-TenantCsv', $tenant, '-AsOf', $asOf, '-OutDir', $f)
     $ok = $ok -and $r.Code -eq 0; Say (Format-Step 'findings' ($r.Code -eq 0) $r.Text)
     $r = Invoke-DemoStep 'New-ManagerBrief.ps1' @('-SummaryJson', (Join-Path $f 'findings-summary.json'), '-UsersCsv', $users, '-OutDir', $b)
     $ok = $ok -and $r.Code -eq 0; Say (Format-Step 'brief' ($r.Code -eq 0) $r.Text)
@@ -110,30 +114,35 @@ function Invoke-Story([string] $Dir) {
     # The closing table, from the files the steps wrote.
     $summary = Read-JsonExact (Join-Path $f 'findings-summary.json')
     $list = Read-JsonExact (Join-Path $w 'worklist.json')
-    $last = @{}
-    foreach ($a in @((Read-JsonExact (Join-Path $b 'decisions.json'))['answers'])) { $last[$a['decision']] = $a['answer'] }
+    $ids = @(@($summary['decisions']) | Where-Object { $_ } | ForEach-Object { $_['id'] })
+    $history = Get-AnswerHistory (Read-DecisionsFile (Join-Path $b 'decisions.json') (Get-FileSha256 (Join-Path $f 'findings-summary.json')) $ids)
     $t = $summary['thresholds']
     $short = @{
-        R3 = 'administrator without MFA registered'
+        R3 = 'enabled administrator without MFA registered'
         R6 = 'more than {0} global administrators' -f $t['global_admin_limit']
         R7 = 'legacy authentication not blocked'
-        R8 = 'policy in report-only mode over {0} days' -f $t['report_only_days']
-        R4 = 'guest with no sign-in for {0} days, or never' -f $t['stale_days']
+        R8 = 'over {0} days old, still in report-only mode' -f $t['report_only_days']
+        R4 = 'guest, no sign-in for {0} days or none on record' -f $t['stale_days']
         R1 = 'licensed, no sign-in for over {0} days' -f $t['stale_days']
         R2 = 'disabled, still licensed'
-        R5 = 'licensed, never signed in, over {0} days old' -f $t['new_account_grace_days']
+        R5 = 'licensed, no sign-in on record, over {0} days old' -f $t['new_account_grace_days']
     }
     Say ''
-    Say ('{0,-5} {1,-45} {2,5}  {3,-8} {4,-7} {5}' -f 'rule', 'finding', 'count', 'decision', 'answer', 'work list')
+    Say ('{0,-5} {1,-48} {2,5}  {3,-8} {4,-7} {5}' -f 'rule', 'finding', 'count', 'decision', 'answer', 'work list')
     $order = @('R3', 'R6', 'R7', 'R8', 'R4', 'R1', 'R2', 'R5')
     foreach ($id in $order) {
         $rule = @($summary['rules'] | Where-Object { $_['id'] -eq $id })[0]
         $d = @(@($summary['decisions']) | Where-Object { $_ -and $id -in @($_['rules']) })
         $did = if ($d.Count) { $d[0]['id'] } else { '-' }
-        $answer = if ($d.Count -and $last.ContainsKey($did)) { $last[$did] } elseif ($d.Count) { 'open' } else { '-' }
+        $answer = '-'
+        if ($d.Count -and $history.Contains($did)) {
+            $h = $history[$did]
+            $answer = $h[$h.Count - 1]['answer'] + $(if ($h.Count -gt 1) { ' ({0} answers)' -f $h.Count } else { '' })
+        } elseif ($d.Count) { $answer = 'open' }
         $n = @(@($list['items']) | Where-Object { $_ -and $_['Rule'] -eq $id }).Count
         $items = if ($n -eq 1) { '1 item' } elseif ($n) { "$n items" } else { '-' }
-        Say ('{0,-5} {1,-45} {2,5}  {3,-8} {4,-7} {5}' -f $id, $short[$id], $rule['count'], $did, $answer, $items)
+        $count = if ($null -eq $rule['count']) { 'not checked' } else { $rule['count'] }
+        Say ('{0,-5} {1,-48} {2,5}  {3,-8} {4,-7} {5}' -f $id, $short[$id], $count, $did, $answer, $items)
     }
     Say ''
     Say ('reclaimable each month: {0} invented units (not money) | the work list changes nothing in any tenant' -f $summary['reclaimable_monthly_cost_synthetic'])
@@ -143,18 +152,18 @@ function Invoke-Story([string] $Dir) {
 
 # --- the failure gallery ----------------------------------------------------------------------------------------------
 $userHead = 'UserPrincipalName,DisplayName,Department,UserType,AccountEnabled,IsAdmin,MfaRegistered,CreatedDate,LastSignInDate,AssignedLicenses,AdminRoles'
-$policyHead = 'PolicyId,DisplayName,State,CreatedDate,ClientAppTypes,IncludeUsers,IncludeApplications,GrantControls,OtherConditions'
-$blockLegacy = '00000000-0000-4000-8000-00000000a001,Block legacy authentication (synthetic),enabled,2025-01-15T08:00:00Z,exchangeActiveSync;other,All,All,block,'
+$policyHead = 'PolicyId,DisplayName,State,CreatedDate,ClientAppTypes,IncludeUsers,IncludeApplications,ExcludeApplications,ApplicationFilter,GrantControls,OtherConditions'
+$blockLegacy = '00000000-0000-4000-8000-00000000a001,Block legacy authentication (synthetic),enabled,2025-01-15T08:00:00Z,exchangeActiveSync;other,All,All,,,block,'
 
 function Invoke-Findings([string] $Dir, [string] $Users, [string] $Policies = $policies) {
-    Invoke-DemoStep 'Get-TenantHygieneFindings.ps1' @('-UsersCsv', $Users, '-SkusCsv', $skus, '-PoliciesCsv', $Policies, '-AsOf', $asOf, '-OutDir', $Dir)
+    Invoke-DemoStep 'Get-TenantHygieneFindings.ps1' @('-UsersCsv', $Users, '-SkusCsv', $skus, '-PoliciesCsv', $Policies, '-TenantCsv', $tenant, '-AsOf', $asOf, '-OutDir', $Dir)
 }
 function Invoke-Brief([string] $Findings, [string] $Dir, [string] $Answer = '') {
     $a = @('-SummaryJson', (Join-Path $Findings 'findings-summary.json'), '-UsersCsv', $users, '-OutDir', $Dir)
     if ($Answer) { $a += @('-Recorded', $Answer) }
     Invoke-DemoStep 'New-ManagerBrief.ps1' $a
 }
-$recorded = [IO.File]::ReadAllText((Join-Path $here 'recordings/brief.recorded.md'))
+$defaultBrief = [IO.File]::ReadAllText((Join-Path $here 'recordings/brief.constructed.md'))
 
 function Invoke-Case([string] $Name, [string] $Dir) {
     New-Folder $Dir
@@ -186,12 +195,12 @@ function Invoke-Case([string] $Name, [string] $Dir) {
         }
         { $_ -in 'invented-figure', 'missing-decision' } {
             if ($Name -eq 'invented-figure') {
-                Say 'case invented-figure: the recorded brief, with a sentence added that holds a figure the summary does not hold'
-                $text = $recorded.Replace('The units were invented for the demo.', 'You will save 500 units a month. The units were invented for the demo.')
+                Say 'case invented-figure: the demo''s brief, with a sentence added that holds a figure the summary does not hold'
+                $text = $defaultBrief.Replace('These units were invented for this demo.', 'You will save 500 units a month. These units were invented for this demo.')
                 $want = 'figures not in the summary: 500'
             } else {
-                Say 'case missing-decision: the recorded brief, with the line of decision D4 taken out'
-                $text = ($recorded -split "`n" | Where-Object { $_ -notlike 'D4 *' }) -join "`n"
+                Say 'case missing-decision: the demo''s brief, with the line of decision D4 taken out'
+                $text = ($defaultBrief -split "`n" | Where-Object { $_ -notlike '- D4 *' }) -join "`n"
                 $want = 'a decision left out: D4'
             }
             Write-TextFile (Join-Path $in 'answer.md') $text

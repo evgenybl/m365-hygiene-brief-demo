@@ -7,20 +7,26 @@
 .DESCRIPTION
     manager.html  the as-of date; what the data is; where the brief's text came from; the brief (the checked text if
                   it passed, otherwise the fixed template, and which it is); the findings by rule with counts and
-                  invented cost units; each decision with its answer, who answered and when, or "open". It holds
-                  stand-ins only and may leave this computer. Before it is written, it is searched for every sign-in
-                  address and full display name in the users table (as whole words, any letter case); one found
-                  anywhere except as the name a person typed for a decision stops the run (exit 2), and nothing is
-                  written. The name typed for a decision is shown as typed.
+                  invented cost units, or "not checked" and what was missing; each decision with its question as the
+                  findings summary holds it (never the brief's wording), its answer, who answered and when, how many
+                  answers it has and the earlier ones, or "open". It holds stand-ins only and may leave this computer.
+                  Before it is written, it is searched for every sign-in address and full display name in the users
+                  table, and for every part of a person's name or address local part with three letters or more (as
+                  whole words, any letter case; number words and accounts named after a department are left out); one
+                  found anywhere except in a name a person typed for a decision stops the run (exit 2), names the
+                  users table row it comes from, and nothing is written. The name typed for a decision is shown as
+                  typed.
     admin.html    the same, with the names behind each finding, the reasons given for a No, and the work list. It says
                   at its top that it stays on this computer.
 
     Every text from a table, a model or a person is HTML-escaped; the pages hold no script, load no external file,
-    and declare a content security policy that allows inline styles only.
+    and declare a content security policy that allows inline styles only. An answer's colour comes from a fixed list
+    (Yes, No, open), never from the file.
 
     The folders must be about one summary: the findings folder's summary, the brief folder's copy of it, the work
-    list and the decisions file it was made from are checked by sha256, and so is brief.md against its brief report.
-    A mismatch stops the run (exit 2), and nothing is written.
+    list and the decisions file it was made from are checked by sha256, and so is brief.md against its brief report;
+    decisions.json is checked before it is used (its shape, each answer's fields and values, and their order). A
+    mismatch stops the run (exit 2), and nothing is written.
 
 .EXAMPLE
     pwsh -File New-HygieneReport.ps1 -FindingsDir out-demo/findings -BriefDir out-demo/brief -WorklistDir out-demo/worklist -UsersCsv data/users.synthetic.csv -DataKind Synthetic -OutDir out-pages
@@ -59,11 +65,12 @@ if ($worklist['decisions_sha256'] -ne $decisionsSha) { Stop-Refused 'the work li
 
 $summary = Read-JsonExact $paths.summary
 $adminRows = @(Import-Csv -LiteralPath $paths.admin -Encoding utf8)
-$last = [ordered]@{}
+$decisionIds = @(@($summary['decisions']) | Where-Object { $_ } | ForEach-Object { $_['id'] })
+$history = [ordered]@{}
+$allAnswers = @()
 if ($decisionsSha) {
-    $doc = Read-JsonExact $decisionsPath
-    if ($doc['summary_sha256'] -ne $summarySha) { Stop-Refused 'decisions.json was written for another summary' }
-    foreach ($a in @($doc['answers'])) { if ($a) { $last[$a['decision']] = $a } }
+    $allAnswers = Read-DecisionsFile $decisionsPath $summarySha $decisionIds
+    $history = Get-AnswerHistory $allAnswers
 }
 
 function Esc([object] $Text) { ConvertTo-HtmlText ([string]$Text) }
@@ -101,20 +108,29 @@ $briefSource = if ($report['ai_text_accepted']) { 'The checked text. Origin: ' +
 
 $ruleRows = foreach ($r in @($summary['rules'])) {
     $who = switch ($r['scope']) { 'tenant' { 'the tenant (no person)' } 'policy' { 'policies (no person)' } default { 'accounts' } }
+    $missing = if ($r.Contains('not_checked')) { $r['not_checked'] } else { $null }
+    $countCell = if ($missing) { 'not checked: ' + $missing } else { [string]$r['count'] }
+    $costCell = if ($missing) { '-' } else { [string]$r['monthly_cost_synthetic'] }
     '<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td><td class="n">{4}</td><td class="n">{5}</td></tr>' -f (Esc $r['id']), (Esc $r['title']),
-        (Esc $r['kind']), (Esc $who), (Esc $r['count']), (Esc $r['monthly_cost_synthetic'])
+        (Esc $r['kind']), (Esc $who), (Esc $countCell), (Esc $costCell)
 }
 $total = '<tr class="t"><td colspan="5">Reclaimable each month (licence cost rules R1, R2, R5)</td><td class="n">{0}</td></tr>' -f (Esc $summary['reclaimable_monthly_cost_synthetic'])
 
+# An answer's class comes from this fixed list, never from the file.
+$answerClass = @{ Yes = 'yes'; No = 'no' }
 function Get-DecisionRows([bool] $WithReason) {
     foreach ($d in @($summary['decisions'])) {
         if (-not $d) { continue }
-        $a = if ($last.Contains($d['id'])) { $last[$d['id']] } else { $null }
+        $list = @(if ($history.Contains($d['id'])) { $history[$d['id']] })
+        $a = if ($list.Count) { $list[$list.Count - 1] } else { $null }
         $answer = if ($a) { $a['answer'] } else { 'open' }
+        $class = if ($a -and $answerClass.ContainsKey($a['answer'])) { $answerClass[$a['answer']] } else { 'open' }
         $by = if ($a) { $a['by'] } else { '' }
         $at = if ($a) { $a['at'] } else { '' }
-        $row = '<tr><td>{0}</td><td>{1}</td><td>{2}</td><td class="a {3}">{4}</td><td>{5}</td><td>{6}</td>' -f (Esc $d['id']), (Esc $d['question']),
-            (Esc (@($d['rules']) -join ', ')), $answer.ToLowerInvariant(), (Esc $answer), (Esc $by), (Esc $at)
+        $count = $list.Count
+        $earlier = if ($list.Count -gt 1) { Format-EarlierAnswers $list -WithReason:$WithReason } elseif ($list.Count -eq 1) { 'none' } else { '' }
+        $row = '<tr><td>{0}</td><td>{1}</td><td>{2}</td><td class="a {3}">{4}</td><td>{5}</td><td>{6}</td><td class="n">{7}</td><td>{8}</td>' -f (Esc $d['id']),
+            (Esc $d['question']), (Esc (@($d['rules']) -join ', ')), $class, (Esc $answer), (Esc $by), (Esc $at), (Esc $count), (Esc $earlier)
         if ($WithReason) { $row += '<td>{0}</td>' -f (Esc $(if ($a) { $a['reason'] } else { '' })) }
         $row + '</tr>'
     }
@@ -169,26 +185,33 @@ function New-Section([string] $Id, [object[]] $Lines) { @("<section id=`"$Id`">"
 $briefSection = New-Section 'brief' @('<h2>The brief</h2>', ('<p class="source">{0}</p>' -f (Esc $briefSource)), '<div class="brief">', (ConvertTo-BriefHtml $briefText), '</div>')
 $findingsSection = New-Section 'findings' (@('<h2>Findings by rule</h2>', '<table><thead><tr><th>Rule</th><th>What it finds</th><th>Kind</th><th>About</th><th>Count</th><th>Invented units a month</th></tr></thead><tbody>') +
     @($ruleRows) + @($total, '</tbody></table>', ('<p class="source">{0}</p>' -f (Esc $summary['cost_note']))))
-$decHead = '<table><thead><tr><th>Id</th><th>Question</th><th>Rules</th><th>Answer</th><th>By</th><th>When (UTC)</th>{0}</tr></thead><tbody>'
+$decHead = '<table><thead><tr><th>Id</th><th>Question</th><th>Rules</th><th>Answer</th><th>By</th><th>When (UTC)</th><th>Answers</th><th>Earlier answers</th>{0}</tr></thead><tbody>'
+$decNote = '<p class="source">Each question is the findings summary''s own, fixed by the script, not the brief''s wording. The last answer counts; the earlier ones are shown. A name is shown as the person typed it; it is not checked against any directory.</p>'
 $managerDecisions = New-Section 'decisions' $(if (@($summary['decisions']).Count) { @('<h2>Decisions</h2>', ($decHead -f ''), @(Get-DecisionRows $false), '</tbody></table>',
-    '<p class="source">A name is shown as the person typed it; it is not checked against any directory.</p>') } else { @('<h2>Decisions</h2>', $noDecisions) })
+    $decNote) } else { @('<h2>Decisions</h2>', $noDecisions) })
 $manager = New-Page 'Microsoft 365 hygiene brief' '' (@($briefSection) + @($findingsSection) + @($managerDecisions) +
     @(New-Section 'about' @('<h2>About this page</h2>', '<p>People appear only as stand-ins (user-001 ...) and policies as policy-001 ... . The administrator keeps the names on a separate page that stays on their computer.</p>')))
 
-# The manager's page may leave the computer: no address or full name from the users table may be on it, except a
-# name a person typed for a decision, which is shown as typed.
+# The manager's page may leave the computer: no address, full name or part of a person's name from the users table
+# may be on it, except in a name a person typed for a decision, which is shown as typed.
 $users = @(Import-Csv -LiteralPath $UsersCsv -Encoding utf8)
 $departments = @($users | ForEach-Object { $_.Department } | Where-Object { $_ })
 $scan = ($manager -join "`n")
-foreach ($a in $last.Values) { $scan = $scan.Replace((Esc $a['by']), ' ') }
+foreach ($a in @($allAnswers)) { if ($a) { $scan = $scan.Replace((Esc $a['by']), ' ') } }
 $scanText = [System.Net.WebUtility]::HtmlDecode(($scan -replace '<[^>]*>', ' '))
-$found = @(foreach ($u in $users) {
-    $name = ($u.DisplayName -replace '\(.*\)', '').Trim()
-    foreach ($v in @($u.UserPrincipalName, $(if ($name -notin $departments) { $name }))) {
-        if ($v -and [regex]::IsMatch($scanText, '(?<!\w)' + [regex]::Escape($v) + '(?!\w)', 'IgnoreCase, CultureInvariant')) { $v }
+$foundRows = [System.Collections.Generic.List[int]]::new()
+$row = 0
+foreach ($u in $users) {
+    $row++
+    $src = Get-NameSource $u
+    foreach ($v in @($src.Upn, $(if ($src.Name -notin $departments) { $src.Name }))) {
+        if ($v -and [regex]::IsMatch($scanText, '(?<!\w)' + [regex]::Escape($v) + '(?!\w)', 'IgnoreCase, CultureInvariant') -and $row -notin $foundRows) { $foundRows.Add($row) }
     }
-})
-if ($found.Count -gt 0) { Stop-Refused "$($found.Count) name(s) or address(es) from the users table would be on the manager's page; nothing was written" }
+}
+foreach ($r in @(Find-NameParts $scanText (Get-PersonNameParts $users))) { if ($r -notin $foundRows) { $foundRows.Add($r) } }
+if ($foundRows.Count -gt 0) {
+    Stop-Refused "a name, an address or a part of a name from the users table (row $(($foundRows | Sort-Object) -join ', ')) would be on the manager's page; nothing was written"
+}
 
 $nameRows = foreach ($r in $adminRows) {
     '<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td><td class="n">{4}</td><td>{5}</td><td class="n">{6}</td><td>{7}</td></tr>' -f (Esc $r.Rule),
@@ -196,17 +219,20 @@ $nameRows = foreach ($r in $adminRows) {
 }
 $workRows = foreach ($i in @($worklist['items'])) {
     if (-not $i) { continue }
-    '<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td></tr>' -f (Esc $i['Decision']), (Esc $i['Rule']),
-        (Esc $(if ($i['Name']) { '{0} ({1})' -f $i['Name'], $i['Item'] } else { $i['Item'] })), (Esc $i['Detail']), (Esc $i['WhatToReview']), (Esc $i['DecidedBy']), (Esc $i['DecidedAt'])
+    '<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td><td class="n">{7}</td></tr>' -f (Esc $i['Decision']), (Esc $i['Rule']),
+        (Esc $(if ($i['Name']) { '{0} ({1})' -f $i['Name'], $i['Item'] } else { $i['Item'] })), (Esc $i['Detail']), (Esc $i['WhatToReview']), (Esc $i['DecidedBy']),
+        (Esc $i['DecidedAt']), (Esc $i['Answers'])
 }
-$notOnList = @(@($worklist['no']) | Where-Object { $_ } | ForEach-Object { '<li>{0}: answered No by {1} at {2}. Reason: {3}</li>' -f (Esc $_['decision']), (Esc $_['by']), (Esc $_['at']), (Esc $_['reason']) }) +
-    @(@($worklist['open']) | Where-Object { $_ } | ForEach-Object { '<li>{0}: still open, no answer recorded.</li>' -f (Esc $_) })
+$notOnList = @(@($worklist['no']) | Where-Object { $_ } | ForEach-Object { '<li>{0}: answered No by {1} at {2}. Reason: {3} Answers: {4}{5}</li>' -f (Esc $_['decision']),
+        (Esc $_['by']), (Esc $_['at']), (Esc $_['reason']), (Esc $_['answers']), (Esc $(if ($_['earlier']) { '; earlier: ' + $_['earlier'] + '.' } else { '.' })) }) +
+    @(@($worklist['open']) | Where-Object { $_ } | ForEach-Object { '<li>{0}: still open, no answer recorded.</li>' -f (Esc $_) }) +
+    @(@($worklist['not_checked']) | Where-Object { $_ } | ForEach-Object { '<li>{0}: not checked, because {1}.</li>' -f (Esc $_['rule']), (Esc $_['missing']) })
 $adminSections = @($briefSection) + @($findingsSection) + @(New-Section 'names' (
     @('<h2>The findings with names</h2>', '<table><thead><tr><th>Rule</th><th>Name</th><th>Sign-in address</th><th>Department</th><th>Days since sign-in</th><th>Licences</th><th>Invented units</th><th>Detail</th></tr></thead><tbody>') +
     @($nameRows) + @('</tbody></table>'))) +
-    @(New-Section 'decisions' $(if (@($summary['decisions']).Count) { @('<h2>Decisions</h2>', ($decHead -f '<th>Reason</th>'), @(Get-DecisionRows $true), '</tbody></table>') } else { @('<h2>Decisions</h2>', $noDecisions) })) +
-    @(New-Section 'worklist' (@('<h2>The work list</h2>', '<p>Only the decisions answered Yes. It is a list for a person; nothing here has been changed in any tenant.</p>',
-        '<table><thead><tr><th>Decision</th><th>Rule</th><th>Account or item</th><th>Detail</th><th>What to review</th><th>Decided by</th><th>When (UTC)</th></tr></thead><tbody>') +
+    @(New-Section 'decisions' $(if (@($summary['decisions']).Count) { @('<h2>Decisions</h2>', ($decHead -f '<th>Reason</th>'), @(Get-DecisionRows $true), '</tbody></table>', $decNote) } else { @('<h2>Decisions</h2>', $noDecisions) })) +
+    @(New-Section 'worklist' (@('<h2>The work list</h2>', '<p>Only the decisions answered Yes (their last answer). It is a list for a person; nothing here has been changed in any tenant. Each decision''s question, as the summary holds it, is in the Decisions table above.</p>',
+        '<table><thead><tr><th>Decision</th><th>Rule</th><th>Account or item</th><th>Detail</th><th>What to review</th><th>Decided by</th><th>When (UTC)</th><th>Answers</th></tr></thead><tbody>') +
     @($workRows) + @('</tbody></table>', '<h3>Not on the work list</h3>') +
     $(if ($notOnList.Count) { @('<ul>') + $notOnList + @('</ul>') } else { @('<p>Nothing: every decision was answered Yes.</p>') })))
 $admin = New-Page 'Microsoft 365 hygiene brief: administrator' 'For the administrator only. This page holds names and sign-in addresses: keep it on this computer and do not send it.' $adminSections

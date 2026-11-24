@@ -1,0 +1,10 @@
+# Every text file is stored and checked out with LF line ends, on every platform.
+* text=auto eol=lf
+
+# A recorded model answer is kept byte for byte: its sha256 is in the meta file beside it, so git must never change
+# its line ends.
+recordings/*.md -text
+recordings/earlier/*.md -text
+
+# Pictures are binary.
+*.png binary

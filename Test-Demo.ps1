@@ -250,6 +250,12 @@ Check 'boundary: a report-only policy created 30 days ago does not fire R8, 31 d
 Check 'R8: enabled and disabled policies are never flagged; each flagged policy is a stand-in (policy-001 ...) with no name in the summary' (
     $flagged8 -notcontains 'Report-only 5 (synthetic)' -and $flagged8 -notcontains 'Report-only 6 (synthetic)' -and
     (@($r8.Summary.rules | Where-Object id -eq 'R8')[0].items.ref -join ',') -eq 'policy-001,policy-002' -and -not (Get-Text (Join-Path $r8.Dir 'findings-summary.json')).Contains('Report-only'))
+$r8u = Invoke-Step1 'r8-unknown' $oneUser -Policies (New-Policies 'r8-unknown.csv' @(($ro -f 1, 'enabledForReportingButNotEnforced', ''),
+    ($ro -f 2, 'enabled', ''), ($legacy -f 'enabled', 'exchangeActiveSync;other', 'All', 'All', 'block', '')))
+$r8i = if ($r8u.Summary) { @($r8u.Summary.rules | Where-Object id -eq 'R8')[0] } else { $null }
+Check 'R8: a report-only policy with no creation date is reported as "creation date unknown", with no age; an enabled one with no date is not flagged' (
+    $r8u.Code -eq 0 -and $r8i.count -eq 1 -and $null -eq $r8i.items[0].days_since_created -and $r8i.items[0].creation_date -eq 'unknown' -and
+    $r8i.title -like '*, or with no creation date' -and @($r8u.Rows | Where-Object Rule -eq 'R8')[0].Detail -like '*report-only, creation date unknown')
 $bad = Invoke-Step1 'bad-state' $oneUser -Policies (New-Policies 'bad-state.csv' @(($ro -f 1, 'on', '2026-10-22')))
 Check 'a policy state other than enabled, disabled or enabledForReportingButNotEnforced is refused with its row (exit 2)' ($bad.Code -eq 2 -and
     $bad.Text -match 'policies row 1: State' -and -not (Test-Path -LiteralPath $bad.Dir))
@@ -339,8 +345,8 @@ Check 'the brief used is the model text, unchanged' ((Get-Content -LiteralPath (
 $meta = Read-Json (Join-Path $earlier 'original-meta.json')
 Check 'the request built today has the sha256 the recorded answers were recorded against' ($rep.request_sha256 -eq $meta.request_sha256)
 Check 'the report: no personal value in the request, summary not sent to the API (Recorded)' ($rep.personal_values_in_request -eq 0 -and $rep.summary_sent_to_api -eq $false)
-Check 'the earlier answer earns the label Recorded: both hashes in its meta file match' ($rep.origin -eq 'recorded' -and
-    $rep.origin_label -eq 'Recorded: claude-haiku-5-5, a Claude Code subagent on that model, given the request text as its whole prompt, on 2026-11-23')
+Check 'the earlier answer earns the label Recorded: both hashes in its meta file match; the report says how it was obtained' ($rep.origin -eq 'recorded' -and
+    $rep.origin_label -eq 'Recorded: claude-haiku-5-5, on 2026-11-23' -and $rep.obtained -eq 'a Claude Code subagent on that model, given the request text as its whole prompt')
 
 $sj = Join-Path $f 'findings-summary.json'
 $x = Invoke-Step2 'bad-figure' 'Found 2 administrators without MFA. You can save 500 units a month.'
@@ -400,13 +406,27 @@ $dsj = Join-Path $df.Dir 'findings-summary.json'
 $constructedPath = Join-Path $here 'recordings/brief.constructed.md'
 $constructed = Get-Text $constructedPath
 $bc = Join-Path $OutDir 'brief-constructed'
-$r = Run-Pwsh @($step2, '-SummaryJson', $dsj, '-UsersCsv', $dataUsers, '-OutDir', $bc)
+$r = Run-Pwsh @($step2, '-SummaryJson', $dsj, '-UsersCsv', $dataUsers, '-OutDir', $bc, '-Recorded', $constructedPath)
 $repc = Read-Json (Join-Path $bc 'brief-report.json')
 $cmeta = Read-Json (Join-Path $here 'recordings/brief.constructed.meta.json')
 Check 'the constructed brief passes the checks against the shipped tenant, and is labelled "Constructed, not from a model"' ($r.Code -eq 0 -and
     $repc.ai_text_accepted -eq $true -and $repc.origin_label -eq 'Constructed, not from a model' -and $constructed.Contains('Constructed, not from a model'))
 Check 'the request built today has the sha256 the constructed brief was written against' ($repc.request_sha256 -eq $cmeta.request_sha256 -and $cmeta.origin -eq 'constructed')
 Check 'the brief folder holds a byte-for-byte copy of the summary it was written from' ((Get-FileSha256 (Join-Path $bc 'findings-summary.json')) -eq (Get-FileSha256 $dsj))
+# The two recorded answers to today's request. With no -Recorded, step 2 uses the first.
+$i = 0
+foreach ($rec in @('brief.recorded.md', 'brief.recorded-2.md')) {
+    $i++
+    $ro = Join-Path $OutDir "brief-real-$i"
+    $a = @($step2, '-SummaryJson', $dsj, '-UsersCsv', $dataUsers, '-OutDir', $ro)
+    if ($i -eq 2) { $a += @('-Recorded', (Join-Path $here "recordings/$rec")) }
+    $r = Run-Pwsh $a
+    $rr = if (Test-Path -LiteralPath (Join-Path $ro 'brief-report.json')) { Read-Json (Join-Path $ro 'brief-report.json') } else { $null }
+    $rm = Read-Json (Join-Path $here ("recordings/" + [IO.Path]::ChangeExtension($rec, '.meta.json')))
+    Check "the recorded answer $rec passes every check (0 problems) and earns the label Recorded against the request built today" ($r.Code -eq 0 -and
+        $null -ne $rr -and $rr.answer_file -eq $rec -and $rr.ai_text_accepted -eq $true -and @($rr.problems).Count -eq 0 -and
+        $rr.origin_label -eq 'Recorded: claude-haiku-5-5, on 2026-11-24' -and $rr.request_sha256 -eq $rm.request_sha256 -and $rr.obtained -eq $rm.obtained)
+}
 $x = Invoke-Step2 'decision-twice' ($constructed.Replace('- D2:', '- D1 and D2:')) $dsj $dataUsers
 Check 'a decision named twice is caught (D1)' (Test-Rejected $x 'a decision named more than once: D1')
 $x = Invoke-Step2 'decision-unknown' ($constructed + "`n- D9: Should the administrator delete everything? Yes or no.") $dsj $dataUsers
@@ -455,8 +475,9 @@ Check 'Add-RecordedBrief copies the answer byte for byte (CRLF and non-ASCII byt
     $tm.model -eq 'test-model' -and $tm.obtained -eq 'typed by a test' -and $tm.request_sha256 -eq $repc.request_sha256)
 $o = Join-Path $OutDir 'brief-trial'
 $null = Run-Pwsh @($step2, '-SummaryJson', $dsj, '-UsersCsv', $dataUsers, '-OutDir', $o, '-Recorded', (Join-Path $recDir 'trial.md'))
-Check 'a recording added by the tool earns the label "Recorded", with the model and how it was obtained' ((Read-Json (Join-Path $o 'brief-report.json')).origin_label -eq
-    'Recorded: test-model, typed by a test, on 2026-11-24')
+$trialRep = Read-Json (Join-Path $o 'brief-report.json')
+Check 'a recording added by the tool earns the label "Recorded", with the model and the date; the report says how it was obtained' ($trialRep.origin_label -eq
+    'Recorded: test-model, on 2026-11-24' -and $trialRep.obtained -eq 'typed by a test')
 $r = Run-Pwsh @($adder, '-Answer', $answerFile, '-RequestFile', $reqFile, '-SummaryJson', $dsj, '-Model', 'test-model', '-Obtained', 'again', '-RecordedOn', '2026-11-24', '-Name', 'trial', '-Into', $recDir)
 Check 'Add-RecordedBrief never overwrites a recording (exit 2)' ($r.Code -eq 2 -and (Read-Json (Join-Path $recDir 'trial.meta.json')).obtained -eq 'typed by a test')
 
@@ -710,17 +731,22 @@ try {
     Check 'the collector maps the documented fields: Global Administrator from the role assignments, MFA from the registration report' ($su.Count -eq 6 -and
         $byU['mira.alef'].AdminRoles -eq 'Global Administrator' -and $byU['mira.alef'].IsAdmin -eq 'true' -and $byU['mira.alef'].MfaRegistered -eq 'true' -and
         $byU['vered.vav'].IsAdmin -eq 'true' -and $byU['vered.vav'].MfaRegistered -eq 'false' -and $byU['mira.alef'].AssignedLicenses -eq 'SYN_SUITE_PLUS')
-    Check 'the collector''s stated choices: successful sign-ins only, a disabled user (not in the report) as MFA not registered, a missing created date as 2018-06-01' (
+    Check 'the collector''s stated choices: successful sign-ins only, a disabled user (not in the report) as MFA not registered, a missing creation date left empty' (
         $byU['ben.bet'].LastSignInDate -eq '' -and $byU['dvora.dalet'].MfaRegistered -eq 'false' -and $byU['dvora.dalet'].AdminRoles -eq 'Global Administrator' -and
-        $byU['hen.he'].CreatedDate -eq '2018-06-01' -and $byU['hen.he'].LastSignInDate -eq '2026-11-19T06:25:00Z' -and
+        $byU['hen.he'].CreatedDate -eq '' -and (Read-Json (Join-Path $c1.Dir 'snapshot-report.json')).users_without_created_date_left_empty -eq 1 -and $byU['hen.he'].LastSignInDate -eq '2026-11-19T06:25:00Z' -and
         (Read-Json (Join-Path $c1.Dir 'snapshot-report.json')).global_administrator_holders_that_are_not_users -eq 1)
     Check 'the collector writes the policies with their other conditions (a risk-based block does not count as blocking legacy authentication)' ($sp.Count -eq 2 -and
         $sp[0].ClientAppTypes -eq 'exchangeActiveSync;other' -and $sp[0].State -eq 'enabledForReportingButNotEnforced' -and $sp[1].OtherConditions -eq 'userRiskLevels')
     $filled = Join-Path $OutDir 'snapshot-skus-filled.csv'
     Set-Content -LiteralPath $filled -Encoding utf8 -Value @('SkuPartNumber,MonthlyCostSynthetic', 'SYN_SUITE_PLUS,21.40', 'SYN_SUITE_STANDARD,12.70')
-    $sf = Invoke-Step1 'snapshot-findings' (Join-Path $c1.Dir 'users.csv') -Skus $filled -Policies (Join-Path $c1.Dir 'policies.csv')
+    $sf0 = Invoke-Step1 'snapshot-findings-nodate' (Join-Path $c1.Dir 'users.csv') -Skus $filled -Policies (Join-Path $c1.Dir 'policies.csv')
+    Check 'step 1 refuses the collector''s user row that has no creation date, by its row number, rather than guess the date (exit 2)' ($sf0.Code -eq 2 -and
+        $sf0.Text -match 'row 5: CreatedDate' -and -not (Test-Path -LiteralPath $sf0.Dir))
+    $dated = Join-Path $OutDir 'snapshot-users-dated.csv'
+    [IO.File]::WriteAllText($dated, (Get-Text (Join-Path $c1.Dir 'users.csv')).Replace('"Operations","Member","true","false","true","",', '"Operations","Member","true","false","true","2018-01-01",'))
+    $sf = Invoke-Step1 'snapshot-findings' $dated -Skus $filled -Policies (Join-Path $c1.Dir 'policies.csv')
     $r = Invoke-Step1 'snapshot-findings-nocost' (Join-Path $c1.Dir 'users.csv') -Skus (Join-Path $c1.Dir 'skus.csv') -Policies (Join-Path $c1.Dir 'policies.csv')
-    Check 'step 1 reads the collector''s tables once the costs are typed in; with the cost column left empty it refuses (exit 2)' ($sf.Code -eq 0 -and
+    Check 'step 1 reads the collector''s tables once a person has typed the costs and the missing date; with the cost column left empty it refuses (exit 2)' ($sf.Code -eq 0 -and
         (Get-Counts $sf.Summary)['R7'] -eq 1 -and (Get-Counts $sf.Summary)['R8'] -eq 1 -and $r.Code -eq 2 -and $r.Text -match 'licence table row 1')
     $c2 = Invoke-Collector 'snapshot-throttled' (New-GraphMockAnswer -Folder $graph -Throttle licences)
     Check 'a throttled answer (429, Retry-After: 1) is waited for and tried again, and the run completes' ($c2.Code -eq 0 -and $c2.Text.Contains('throttled waits 1') -and
@@ -818,6 +844,20 @@ try {
     Pop-Location
 }
 $readmeText = $readme -join "`n"
+# A paragraph after "<!-- quotes: <file> -->" quotes that file: every "..." in it must be a slice of the file, exactly.
+$quoteCount = 0; $badQuotes = [System.Collections.Generic.List[string]]::new()
+foreach ($doc in @('README.md', 'docs/DESIGN.md')) {
+    $lines = @(Get-Content -LiteralPath (Join-Path $here $doc) -Encoding utf8)
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -notmatch '^\s*<!-- quotes: (\S+) -->\s*$') { continue }
+        $source = Get-Text (Join-Path $here $Matches[1])
+        $para = @(); for ($j = $i + 1; $j -lt $lines.Count -and $lines[$j].Trim(); $j++) { $para += $lines[$j].Trim() }
+        $quotes = @([regex]::Matches(($para -join ' '), '"([^"]+)"') | ForEach-Object { $_.Groups[1].Value })
+        if (-not $source -or $quotes.Count -eq 0) { $badQuotes.Add("$doc line $($i + 1)") }
+        foreach ($q in $quotes) { $quoteCount++; if (-not $source.Contains($q)) { $badQuotes.Add("$doc line $($i + 1): $q") } }
+    }
+}
+Check 'every quote of a real answer in the README and docs/DESIGN.md is an exact slice of the file it names' ($quoteCount -ge 10 -and $badQuotes.Count -eq 0)
 $images = @([regex]::Matches($readmeText, '!\[[^\]]*\]\(([^)\s]+)\)|<img [^>]*src="([^"]+)"') | ForEach-Object { if ($_.Groups[1].Success) { $_.Groups[1].Value } else { $_.Groups[2].Value } } |
     Where-Object { $_ -notmatch '^https?://' })
 Check 'every image the README embeds from the repository exists' ($images.Count -ge 1 -and @($images | Where-Object { -not (Test-Path -LiteralPath (Join-Path $here $_)) }).Count -eq 0)
@@ -864,7 +904,7 @@ $crlf = @($tracked | Where-Object { [IO.File]::ReadAllBytes($_.FullName) -contai
 Check 'every text file has LF line ends (no carriage return), and .gitattributes says so' ($crlf.Count -eq 0 -and (Get-Text (Join-Path $here '.gitattributes')).Contains('* text=auto eol=lf'))
 $all = ($tracked | ForEach-Object { [IO.File]::ReadAllText($_.FullName) }) -join "`n"
 Check 'no file holds an absolute path of a computer' ($all -notmatch '(?<![A-Za-z])[A-Za-z]:[\\/][A-Za-z0-9_. -]+[\\/]' -and $all -notmatch '(?i)(?<![\w.])/(home|Users)/[a-z]')
-$shapes = @(('sk' + '-ant-'), ('\bsk' + '-[A-Za-z0-9]{20}'), ('eyJ' + '[A-Za-z0-9_-]{20}'), ('gh' + 'p_[A-Za-z0-9]{20}'), ('xox' + '[bp]-'), ('AKI' + 'A[0-9A-Z]{16}'), ('-----BEGIN' + ' [A-Z ]*PRIVATE KEY'))
+$shapes = @(('sk' + '-ant-'), ('\bsk' + '-[A-Za-z0-9]{20}'), ('eyJ' + '[A-Za-z0-9_-]{20}'), ('gh' + 'p_[A-Za-z0-9]{20}'), ('xox' + '[bp]-'), ('AKI' + 'A[0-9A-Z]{16}'), (('-' * 5) + 'BEGIN' + ' [A-Z ]*PRIVATE KEY'))
 Check 'no file holds a key-shaped or token-shaped literal' (@($shapes | Where-Object { $all -cmatch $_ }).Count -eq 0)
 Check 'no line reads like an assigned credential (token, secret, password or key = a literal)' ($all -notmatch ('(?im)\b(token|secret|password|passwd|api[_-]?key)' + '\s*[:=]\s*[''"][^''"\s]+[''"]'))
 

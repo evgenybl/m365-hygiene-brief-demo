@@ -26,16 +26,15 @@ lines, from `examples/brief/brief.md`:
 
 <!-- pasted: file examples/brief/brief.md -->
 ```text
-*Constructed, not from a model: this text was written by hand to the request, so that the checks and the pages can be shown. A recorded model answer is meant to replace it.*
+We checked the company's Microsoft 365 accounts and sign-in rules as of 2026-11-21: 60 user accounts and 7 sign-in rules.
 
-On 21 November 2026 we checked 60 user accounts and 7 sign-in policies in Microsoft 365 for security gaps and unused licences.
+**Security findings**
 
-**Security findings, most urgent first**
+- Administrator accounts without a second sign-in step: 2. An administrator account can change a lot in the system, so a stolen password alone should never be enough to open it.
 ```
 
-This brief was written by hand to the current request and is labelled **Constructed** here and on the pages: the
-answers recorded from a model so far answered an earlier request (see *What is real here*). The whole story ends in this
-table, drawn from a real run:
+This brief is a real model answer, labelled **Recorded** here and on the pages, with the caveats in *What is real here*,
+below. The whole story ends in this table, drawn from a real run:
 
 ![The closing table of the demo: each rule, its count, the manager's decision, and what reached the work list](docs/img/demo.svg)
 
@@ -53,10 +52,10 @@ The whole story, on the invented tenant in `data/`:
 $ pwsh -NoProfile -File Invoke-Demo.ps1
 Microsoft 365 hygiene demo: synthetic data, as of 2026-11-21
 findings    OK       users 60 | policies 7 | security defaults off | R1 7 | R2 2 | R3 2 | R4 2 | R5 1 | R6 1 | R7 1 | R8 2 | reclaimable (invented units) 169.4 | people flagged 14 | decisions D1 D2 D3 D4 D5 D6
-brief       OK       backend Recorded | text accepted True | problems 0 | summary sent to the API False | Constructed, not from a model
+brief       OK       backend Recorded | text accepted True | problems 0 | summary sent to the API False | Recorded: claude-haiku-5-5, on 2026-11-24
 decisions   OK       5 answers recorded: D1 Yes, D2 Yes, D3 Yes, D4 No, D5 Yes; D6 left open
 work list   OK       work list items 10 | from D1 D2 D3 D5 | answered No D4 | open D6
-pages       OK       pages manager.html (stand-ins only, may leave this computer) and admin.html (names; stays on this computer) | brief: Constructed, not from a model
+pages       OK       pages manager.html (stand-ins only, may leave this computer) and admin.html (names; stays on this computer) | brief: Recorded: claude-haiku-5-5, on 2026-11-24
 
 rule  finding                                          count  decision answer  work list
 R3    enabled administrator without MFA registered         2  D1       Yes     2 items
@@ -160,11 +159,34 @@ lacks, or a department that holds a part of a person's name stops the run with i
 The limits (90, 30, 4, 30) are parameters. The costs are exact decimals in units invented for the demo. The reasons behind
 each choice are in [docs/DESIGN.md](docs/DESIGN.md).
 
-### What the checks did not catch in real answers
+### What the checks did not catch in the two real answers
 
-The real answers recorded so far answered earlier requests, and are kept in `recordings/earlier/` with the request each
-answered. What the checks missed in them is in [docs/DESIGN.md](docs/DESIGN.md), under *Limits of the checks*. Answers to
-the current request are still to be recorded; what reading them shows will be listed here.
+Both answers to the current request in `recordings/` pass every check above. Read by a person, they say things no
+check looks for.
+
+<!-- quotes: recordings/brief.recorded.md -->
+**A time the data does not hold.** The first answer says "policy-001 has been in report-only mode for 45 days and policy-002 for 31 days".
+
+<!-- quotes: recordings/brief.recorded-2.md -->
+The second says "policy-001 has been in that mode for 45 days". The summary gives only the days since each policy was
+created; how long a policy has been in report-only mode is not known. Every figure is in the summary, so the figure
+check passes a sentence that says more than the data.
+
+<!-- quotes: recordings/brief.recorded.md -->
+**A count in words, and a count that reads oddly.** The first answer writes one count in words, "Five accounts hold the role", which the figure check does not read. It also gives "Too many Global Administrator accounts: 1." and "Older sign-in methods not blocked: 1.": the summary's count of findings, which reads as a number of things.
+
+<!-- quotes: recordings/brief.recorded-2.md -->
+**A wider claim, the wrong reader, a missing sentence.** The second answer says "Microsoft keeps no sign-in history before 1 December 2023"; the summary's note says only that the last successful sign-in is not backfilled before that date.
+It heads the decisions "Decisions for the administrator", though they are the manager's to answer. Its line "Global Administrator role: 5 accounts hold it, and the limit is 4." does not say that the finding names no person, which the request asks for.
+
+<!-- quotes: recordings/brief.recorded.md -->
+**Reasons nobody verified.** Both give a reason for each finding in their own words. In the first: "a stolen password alone should never be enough to open it".
+
+<!-- quotes: recordings/brief.recorded-2.md -->
+In the second: "Guest access that nobody uses is access nobody watches."
+
+This is why a person reads the brief before a manager does, and why the decisions' wording comes from the script and
+not from the model. No code check was added for these.
 
 ## What is real here
 
@@ -173,12 +195,18 @@ the current request are still to be recorded; what reading them shows will be li
 | The eight rules and their refusals | Local | Run by the tests and the demo, on invented tables |
 | The checks on the brief | Local | Run by the tests on 29 wrong texts, and on every saved answer |
 | The decisions, the work list and the two pages | Local | Run by the tests and the demo |
-| The brief the demo uses, `recordings/brief.constructed.md` | Constructed | Written by hand to the current request, not by a model, and labelled so on every page; used as a known text by the tests too |
-| The four answers in `recordings/earlier/` | Recorded | Real answers of one small model (claude-haiku-5-5) to two earlier requests, two each. They were given the request through a Claude Code subagent, which also runs under its harness's own system prompt, so they are not the live path's call. A test rebuilds each request from the prompt and summary stored beside the answers and checks its sha256; that the model wrote them rests on the author's record |
+| The brief the demo uses, `recordings/brief.recorded.md` | Recorded | A real answer of one small model (claude-haiku-5-5) to the request the shipped data gives, passed by every check. It was given the request through a Claude Code subagent, which also runs under its harness's own system prompt, so it is not the live path's call. Its sha256 shows that the file has not changed since it was added and which request it answers; that the model wrote it rests on the author's record |
+| A second answer, `recordings/brief.recorded-2.md` | Recorded | Obtained the same way, also passed by every check; not used by the demo |
+| `recordings/brief.constructed.md` | Constructed | Written by hand to the current request, not by a model; used by the tests as a known text |
+| The four answers in `recordings/earlier/` | Recorded | Answers of the same model to two earlier versions of the request, obtained the same way; a test rebuilds each request from the prompt and summary stored beside them and checks its sha256 |
 | The live model path (`-Backend Anthropic`) | Mock | Run against a local mock of the Messages API only |
 | The collector (`Export-TenantSnapshot.ps1`) | Mock | Mock: written from Microsoft's documentation, tested against a local mock, never run against a tenant |
 
 This has not been run against a tenant.
+
+The request has changed twice as the rules grew, and a recorded answer belongs to the request it answered. So
+`recordings/earlier/` keeps the answers to the two earlier versions with the prompt and summary each was built from, and
+[docs/DESIGN.md](docs/DESIGN.md) keeps what reading them showed.
 
 **What a command you can run shows:** that the rules, the checks, the refusals, the decisions, the work list and the
 pages behave as described, on the invented data; that `examples/` is exactly what the demo writes, in any culture; that
@@ -203,11 +231,11 @@ case bad-date: the second row of the users table has a day-first date, 21/08/202
 findings    OK       REFUSED (exit 2): row 2: LastSignInDate is not yyyy-MM-dd or an ISO 8601 timestamp with Z or an offset
 result      OK       nothing written: yes
 case bad-date: as expected
-case invented-figure: the demo's brief, with a sentence added that holds a figure the summary does not hold
+case invented-figure: the recorded brief, with a sentence added that holds a figure the summary does not hold
 brief       OK       text refused: figures not in the summary: 500
 result      OK       brief.md is the fixed template with the script's own figures, and brief-report.json says why
 case invented-figure: as expected
-case missing-decision: the demo's brief, with the line of decision D4 taken out
+case missing-decision: the recorded brief, with the line of decision D4 taken out
 brief       OK       text refused: a decision left out: D4
 result      OK       brief.md is the fixed template with the script's own figures, and brief-report.json says why
 case missing-decision: as expected
@@ -239,8 +267,8 @@ cases 9 | as expected 9 | not as expected 0
 
 ## Recording a real model answer
 
-This is how the answers in `recordings/earlier/` were added, each to the request of its day. The request is the fixed
-prompt and the stand-in summary, nothing else. This writes the current request to a file, exactly as it would be sent:
+This is how the two answers in `recordings/` were added. The request is the fixed prompt and the stand-in summary,
+nothing else. This writes it to a file, exactly as it would be sent:
 
 <!-- pasted: run -->
 ```text
@@ -253,11 +281,11 @@ which copies the answer byte for byte, writes its meta file (origin "recorded", 
 the date), and refuses if the request file is not the request the script builds today:
 
 ```text
-pwsh -NoProfile -File Add-RecordedBrief.ps1 -Answer answer.md -RequestFile request.txt -SummaryJson examples/findings/findings-summary.json -Model <model name> -Obtained "<how it was obtained>" -RecordedOn <yyyy-MM-dd> -Name brief.recorded
+pwsh -NoProfile -File Add-RecordedBrief.ps1 -Answer answer.md -RequestFile request.txt -SummaryJson examples/findings/findings-summary.json -Model <model name> -Obtained "<how it was obtained>" -RecordedOn <yyyy-MM-dd> -Name brief.recorded-3
 ```
 
-Then pass `-Recorded recordings/brief.recorded.md` to `New-ManagerBrief.ps1`; without it, the brief is the constructed
-one, `recordings/brief.constructed.md`. The live path is `-Backend Anthropic`, with the key in the `ANTHROPIC_API_KEY`
+Then pass `-Recorded recordings/brief.recorded-3.md` to `New-ManagerBrief.ps1`; without it, the brief is the first
+recording, `recordings/brief.recorded.md`. The live path is `-Backend Anthropic`, with the key in the `ANTHROPIC_API_KEY`
 environment variable; it is never printed or written, with `-Debug` or `-Verbose` too.
 
 ## Limits, stated plainly
@@ -280,10 +308,11 @@ environment variable; it is never printed or written, with `-Debug` or `-Verbose
   since sign-in, and in a small tenant that can point to one person. A department is free text: the check that it names
   no one catches only the tenant's own people, by the words of their names and addresses, not a nickname or a role that
   points to one person. A name part that is also an everyday word (a person called Will) stops the manager's page.
-- **The checks on the brief have gaps.** They do not catch a number written in words, a sentence the request asked for
-  and the answer left out, a right number attached to the wrong finding, or a percentage or scale word around a valid
-  number ("100%", "169.4 thousand"). They read the decision lines, not what the brief says around them. Only names the
-  users table holds are looked for; a part of a name that the request itself uses as a word, and the number words one
+- **The checks on the brief have gaps.** They do not catch a number written in words, a claim that says more than the
+  data with figures the data holds (a time in report-only mode, where the summary gives a time since creation), a
+  sentence the request asked for and the answer left out, a right number attached to the wrong finding, or a
+  percentage or scale word around a valid number ("100%", "169.4 thousand"). They read the decision lines, not what
+  the brief says around them. Only names the users table holds are looked for; a part of a name that the request itself uses as a word, and the number words one
   to ten, are not; nor, before sending, is a display name that is also a department name.
 - **The label "Recorded" proves that the answer and the request are the ones in the meta file,** not who or what wrote
   the answer.

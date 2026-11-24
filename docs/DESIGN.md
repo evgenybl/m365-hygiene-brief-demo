@@ -57,33 +57,59 @@ the request is the one the script builds today. That the answer came from the na
 recorded it. The label names the model and the date; the meta file's account of how the answer was obtained goes into
 the brief's report and onto the pages.
 
-The demo's brief is `recordings/brief.constructed.md`, written by hand to the current request and labelled
-"Constructed, not from a model". The tests use it too, as a known text.
+The demo's brief is `recordings/brief.recorded.md`, a real answer of one small model (claude-haiku-5-5) to the current
+request; `recordings/brief.recorded-2.md` is a second answer to the same request. Both pass every check, and a test
+checks that each still earns its label. `recordings/brief.constructed.md` is written by hand to the same request and
+labelled "Constructed, not from a model"; the tests use it as a known text.
 
-The real answers are in `recordings/earlier/`, each folder with the two files its request was built from (the prompt and
-the summary); `recordings/earlier/README.md` names each request and its sha256. A test rebuilds each request from those
-two files and checks its sha256, so the answers still earn their label against the request they answered. All four were
-given the request through a Claude Code subagent, which also runs under its harness's own system prompt, so none is the
-live path's call.
+The answers to the two earlier versions of the request are in `recordings/earlier/`, each folder with the two files its
+request was built from (the prompt and the summary); `recordings/earlier/README.md` names each request and its sha256. A
+test rebuilds each request from those two files and checks its sha256, so the answers still earn their label against the
+request they answered. All the recorded answers were given the request through a Claude Code subagent, which also runs
+under its harness's own system prompt, so none is the live path's call.
 
 ## Limits of the checks, seen in the real answers
 
-The two answers to the second earlier request pass every check, the stricter ones of today included. Read by a person,
-they show what the checks do not test.
+The two answers to the current request pass every check. Read by a person, they say things no check looks for.
+
+<!-- quotes: recordings/brief.recorded.md -->
+A time the data does not hold. The first answer says "policy-001 has been in report-only mode for 45 days and policy-002 for 31 days".
+
+<!-- quotes: recordings/brief.recorded-2.md -->
+The second says "policy-001 has been in that mode for 45 days". The summary gives only the days since each policy was
+created; how long a policy has been in report-only mode is not known. Every figure is in the summary, so the figure
+check passes a sentence that says more than the data.
+
+<!-- quotes: recordings/brief.recorded.md -->
+A count in words, and a count that reads oddly. The first answer writes "Five accounts hold the role", a count the figure check does not read, and gives "Too many Global Administrator accounts: 1." and "Older sign-in methods not blocked: 1.": the summary's count of findings, which reads as a number of things.
+
+<!-- quotes: recordings/brief.recorded-2.md -->
+A wider claim, the wrong reader, a missing sentence. The second answer says "Microsoft keeps no sign-in history before 1 December 2023", where the summary's note says only that the last successful sign-in is not backfilled before that date. It heads the decisions "Decisions for the administrator", though they are the manager's to answer. Its line "Global Administrator role: 5 accounts hold it, and the limit is 4." does not say that the finding names no person, which the request asks for.
+
+<!-- quotes: recordings/brief.recorded.md -->
+Reasons nobody verified. Both give a reason for each finding in their own words. The first: "a stolen password alone should never be enough to open it".
+
+<!-- quotes: recordings/brief.recorded-2.md -->
+The second: "Guest access that nobody uses is access nobody watches."
+
+This is why a person reads the brief before a manager does, and why the decisions' wording comes from the script and
+not from the model. No code check was added for these.
+
+The answers to the earlier requests, in `recordings/earlier/`, showed the same kinds of gap.
 
 <!-- quotes: recordings/earlier/second-request/brief.recorded.md -->
-A sentence the request asks for can be missing. The first answer does not say that the finding about Global
-Administrators names no person: "Global Administrator accounts: 5, where the limit is 4. Each extra top-level administrator is another way in and another person who can change everything."
+In `second-request/`, the first answer also leaves out that the finding about Global Administrators names no
+person: "Global Administrator accounts: 5, where the limit is 4. Each extra top-level administrator is another way in and another person who can change everything."
 It says so for the two policy findings: "This is a tenant-wide setting and names no person." and "These are policy settings and name no person."
 The check has no rule for that sentence.
 
 <!-- quotes: recordings/earlier/second-request/brief.recorded-2.md -->
-A count written in words is not checked. The second answer writes most of its counts so: "Three administrator accounts have no second sign-in step (MFA) set up.",
+The second writes most of its counts in words: "Three administrator accounts have no second sign-in step (MFA) set up.",
 "Five accounts", "Two guest accounts", "Seven enabled accounts". The figure check reads digits only, so those counts were
 not checked by code.
 
 <!-- quotes: recordings/earlier/second-request/brief.recorded.md -->
-A reason given in the model's own words is not checked. The first answer: "a stolen password is enough to take over an account that can change the whole system".
+Their reasons are their own words too. The first: "a stolen password is enough to take over an account that can change the whole system".
 
 <!-- quotes: recordings/earlier/second-request/brief.recorded-2.md -->
 The second: "they give a false sense of protection". Both are reasonable, and nobody verified them.
@@ -94,9 +120,9 @@ A list number can pass by luck. The accepted answer to the first request numbers
 the 1, 2 and 3 pass only because the summary of that request holds those numbers. The other answer to that request is
 refused for its list number 4 and for a 5 it cites from its own list.
 
-No code check was added for the meaning of a sentence: a rule for one wording would miss the next. A manager's brief is
-read by a person before it reaches the manager, because the checks prove only what they test (figures written in digits,
-ids, the decision lines, stand-ins and names), not that each sentence is right or complete.
+No code check was added for the meaning of a sentence: a rule for one wording would miss the next. The checks prove only
+what they test (figures written in digits, ids, the decision lines, stand-ins and names), not that each sentence is
+right or complete.
 
 ## People and places in the outputs
 

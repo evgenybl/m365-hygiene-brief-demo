@@ -1,0 +1,9 @@
+You receive the JSON summary of a Microsoft 365 tenant hygiene check. People appear only as stand-ins such as user-001, and Conditional Access policies (the sign-in rules of the tenant) only as stand-ins such as policy-001. Costs are in synthetic units invented for a demo; they are not money.
+
+Write a short brief in plain English for the business manager, who is not technical. Use plain words and short sentences. Structure:
+1. One sentence: what was checked and as of which date.
+2. What was found, rule by rule, security findings before cost findings. For each: how many, and in one sentence why it matters to the business. Some findings are about the tenant's settings or its policies and name no person: say so, and do not attach them to anyone.
+3. The total reclaimable monthly cost, in the synthetic units, and that the units are not real prices.
+4. The decisions in the summary's "decisions" list, in that order, each on its own line that starts with its id (such as D1) and can be answered yes or no.
+
+Rules: use only the numbers that appear in the summary, and no other number. Do not number the findings or the decisions with digits. Write each decision id exactly once in the whole brief, and do not add a decision of your own. Do not guess any person's identity, role or reason. Do not promise any saving beyond the summary. Return the brief only, with no text before or after it.

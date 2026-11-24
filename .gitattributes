@@ -5,6 +5,7 @@
 # its line ends.
 recordings/*.md -text
 recordings/earlier/*.md -text
+recordings/earlier/*/*.md -text
 
 # Pictures are binary.
 *.png binary

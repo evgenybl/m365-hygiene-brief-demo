@@ -7,7 +7,7 @@
 .DESCRIPTION
     The story, on data/ (an invented tenant, as of 2026-11-21):
       1 findings   Get-TenantHygieneFindings.ps1: the eight rules, the administrator's file, the summary
-      2 brief      New-ManagerBrief.ps1 with the saved brief in recordings/ (labelled as its meta file earns)
+      2 brief      New-ManagerBrief.ps1 with the recorded answer recordings/brief.recorded.md (labelled as its meta file earns)
       3 decisions  Set-BriefDecision.ps1: five answers typed for an invented manager, one decision left open
       4 work list  New-AdminWorklist.ps1: the accounts and items of the decisions answered Yes
       5 pages      New-HygieneReport.ps1: the manager's page and the administrator's page
@@ -154,7 +154,7 @@ function Invoke-Brief([string] $Findings, [string] $Dir, [string] $Answer = '') 
     if ($Answer) { $a += @('-Recorded', $Answer) }
     Invoke-DemoStep 'New-ManagerBrief.ps1' $a
 }
-$constructed = [IO.File]::ReadAllText((Join-Path $here 'recordings/brief.constructed.md'))
+$recorded = [IO.File]::ReadAllText((Join-Path $here 'recordings/brief.recorded.md'))
 
 function Invoke-Case([string] $Name, [string] $Dir) {
     New-Folder $Dir
@@ -186,12 +186,12 @@ function Invoke-Case([string] $Name, [string] $Dir) {
         }
         { $_ -in 'invented-figure', 'missing-decision' } {
             if ($Name -eq 'invented-figure') {
-                Say 'case invented-figure: the brief adds a sentence with a figure the summary does not hold'
-                $text = $constructed.Replace('These units were invented for this demo.', 'You will save 500 units a month. These units were invented for this demo.')
+                Say 'case invented-figure: the recorded brief, with a sentence added that holds a figure the summary does not hold'
+                $text = $recorded.Replace('The units were invented for the demo.', 'You will save 500 units a month. The units were invented for the demo.')
                 $want = 'figures not in the summary: 500'
             } else {
-                Say 'case missing-decision: the brief leaves out the line of decision D4'
-                $text = ($constructed -split "`n" | Where-Object { $_ -notlike '- D4:*' }) -join "`n"
+                Say 'case missing-decision: the recorded brief, with the line of decision D4 taken out'
+                $text = ($recorded -split "`n" | Where-Object { $_ -notlike 'D4 *' }) -join "`n"
                 $want = 'a decision left out: D4'
             }
             Write-TextFile (Join-Path $in 'answer.md') $text

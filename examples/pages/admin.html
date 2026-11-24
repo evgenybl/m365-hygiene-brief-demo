@@ -22,37 +22,37 @@ footer { margin-top: 40px; font-size: 0.8rem; color: #57606a; }</style>
 <body><main>
 <p class="warn">For the administrator only. This page holds names and sign-in addresses: keep it on this computer and do not send it.</p>
 <h1>Microsoft 365 hygiene brief: administrator</h1>
-<p class="labels"><span>As of 2026-11-21</span><span>Synthetic data: invented accounts at demo.example.com</span><span>Brief: Constructed, not from a model</span><span>Costs: invented units, not money</span></p>
+<p class="labels"><span>As of 2026-11-21</span><span>Synthetic data: invented accounts at demo.example.com</span><span>Brief: Recorded: claude-haiku-5-5, on 2026-11-24</span><span>Costs: invented units, not money</span></p>
+<section id="brief">
 <h2>The brief</h2>
-<p class="source">The checked text. Origin: Constructed, not from a model</p>
+<p class="source">The checked text. Origin: Recorded: claude-haiku-5-5, on 2026-11-24. How it was obtained: The request text, whole and unchanged, was given as the whole prompt to a Claude Code subagent. The subagent&#39;s transcript names the model. Such a subagent also runs under its harness&#39;s own system prompt, so this is not the live path&#39;s API call. The answer is kept byte for byte as the transcript holds it.</p>
 <div class="brief">
-<p><em>Constructed, not from a model: this text was written by hand to the request, so that the checks and the pages can be shown. A recorded model answer is meant to replace it.</em></p>
-<p>On 21 November 2026 we checked 60 user accounts and 6 sign-in policies in Microsoft 365 for security gaps and unused licences.</p>
-<p><strong>Security findings, most urgent first</strong></p>
+<p>The check covered 60 user accounts and 6 sign-in policies, as of 2026-11-21.</p>
+<p><strong>Security findings</strong></p>
 <ul>
-<li><strong>Administrators without a second sign-in step (MFA): 3 accounts</strong> (user-005, user-008, user-010). An administrator account that is protected only by a password is the easiest way into the company&#39;s mail and files.</li>
-<li><strong>Too many global administrators: 5 accounts hold the role, and the limit set for this check is 4.</strong> This is a setting of the tenant and names no person. Every extra global administrator is one more account that can change everything.</li>
-<li><strong>Old sign-in methods are not blocked.</strong> No switched-on policy blocks legacy authentication, the older ways of signing in that cannot ask for a second step. This is a tenant setting and names no person.</li>
-<li><strong>Sign-in policies left in trial mode: 2 policies</strong> (policy-001, created 45 days ago, and policy-002, created 31 days ago). In report-only mode a policy only records what it would have done; it protects nothing. No person is named here.</li>
-<li><strong>Guest accounts with no sign-in for more than 90 days, or never: 2 accounts</strong> (user-001, user-004). Outside people who may no longer work with you can still reach company information.</li>
+<li>Administrator accounts without a second sign-in step: 3. Without that second step, a stolen password is enough to take over an account that can change the whole system.</li>
+<li>Guest accounts with no sign-in for more than 90 days, or never: 2. Old outside accounts that are still open are an unnecessary way in.</li>
+<li>Global Administrator accounts: 5, where the limit is 4. Each extra top-level administrator is another way in and another person who can change everything.</li>
+<li>No enabled sign-in policy blocks legacy sign-in methods. These older methods skip the second step, so they get around the protections the business relies on. This is a tenant-wide setting and names no person.</li>
+<li>Sign-in policies left in report-only mode for more than 30 days: 2 (policy-001 at 45 days, policy-002 at 31 days). A report-only policy records what it would block but blocks nothing, so the protection is not actually active. These are policy settings and name no person.</li>
 </ul>
 <p><strong>Cost findings</strong></p>
 <ul>
-<li><strong>Active accounts with a licence and no sign-in for more than 90 days: 7 accounts</strong>, 129.2 units a month.</li>
-<li><strong>Disabled accounts that still hold a licence: 2 accounts</strong> (user-010, user-012), 34.1 units a month.</li>
-<li><strong>A licensed account that never signed in, created more than 30 days ago: 1 account</strong> (user-002), 6.1 units a month.</li>
+<li>Enabled accounts with no sign-in for more than 90 days that still carry a paid licence: 7 accounts, 129.2 units a month. Paid seats are going unused.</li>
+<li>Disabled accounts that still carry a paid licence: 2 accounts, 34.1 units a month.</li>
+<li>Licensed accounts that never signed in, created more than 30 days ago: 1 account, 6.1 units a month.</li>
 </ul>
-<p><strong>Total reclaimable cost: 169.4 units a month.</strong> These units were invented for this demo. They are not real prices, and no saving is promised.</p>
-<p><strong>Decisions for you</strong></p>
-<ul>
-<li>D1: Should the administrator require every administrator account to register a second sign-in step (MFA)? Yes or no.</li>
-<li>D2: Should the administrator review who holds the Global Administrator role and bring it down to 4 accounts or fewer? Yes or no.</li>
-<li>D3: Should the administrator turn on a policy that blocks legacy authentication for all users? Yes or no.</li>
-<li>D4: Should the administrator review the policies left in report-only mode, to switch each one on or remove it? Yes or no.</li>
-<li>D5: Should the administrator remove the guest accounts that have not signed in? Yes or no.</li>
-<li>D6: Should the administrator review the unused licences and return the ones the review finds not needed? Yes or no.</li>
-</ul>
+<p>The total reclaimable monthly cost is 169.4 synthetic units. The units were invented for the demo. They are not real prices and not money.</p>
+<p><strong>Decisions</strong></p>
+<p>D1 Should the administrator require every administrator account to register a second sign-in step (MFA)?</p>
+<p>D2 Should the administrator review who holds the Global Administrator role and bring it down to 4 accounts or fewer?</p>
+<p>D3 Should the administrator turn on a Conditional Access policy that blocks legacy authentication for all users?</p>
+<p>D4 Should the administrator review each Conditional Access policy left in report-only mode, to switch it on or remove it?</p>
+<p>D5 Should the administrator remove the guest accounts that have not signed in?</p>
+<p>D6 Should the administrator review the unused licences and return the ones the review finds not needed?</p>
 </div>
+</section>
+<section id="findings">
 <h2>Findings by rule</h2>
 <table><thead><tr><th>Rule</th><th>What it finds</th><th>Kind</th><th>About</th><th>Count</th><th>Invented units a month</th></tr></thead><tbody>
 <tr><td>R1</td><td>Enabled and licensed, no sign-in for more than 90 days</td><td>cost</td><td>accounts</td><td class="n">7</td><td class="n">129.2</td></tr>
@@ -66,6 +66,8 @@ footer { margin-top: 40px; font-size: 0.8rem; color: #57606a; }</style>
 <tr class="t"><td colspan="5">Reclaimable each month (licence cost rules R1, R2, R5)</td><td class="n">169.4</td></tr>
 </tbody></table>
 <p class="source">synthetic units, invented for the demo; not a vendor price and not money</p>
+</section>
+<section id="names">
 <h2>The findings with names</h2>
 <table><thead><tr><th>Rule</th><th>Name</th><th>Sign-in address</th><th>Department</th><th>Days since sign-in</th><th>Licences</th><th>Invented units</th><th>Detail</th></tr></thead><tbody>
 <tr><td>R4</td><td>Tamar Tav (synthetic guest)</td><td>tamar.tav_partner.example.com#EXT#@demo.example.com</td><td></td><td class="n"></td><td></td><td class="n">0</td><td></td></tr>
@@ -92,6 +94,8 @@ footer { margin-top: 40px; font-size: 0.8rem; color: #57606a; }</style>
 <tr><td>R8</td><td>Block legacy authentication (synthetic)</td><td></td><td></td><td class="n"></td><td></td><td class="n">0</td><td>Policy id 00000000-0000-4000-8000-000000000002; report-only, created 2026-10-07, 45 days ago</td></tr>
 <tr><td>R8</td><td>Terms of use for guests (synthetic)</td><td></td><td></td><td class="n"></td><td></td><td class="n">0</td><td>Policy id 00000000-0000-4000-8000-000000000004; report-only, created 2026-10-21, 31 days ago</td></tr>
 </tbody></table>
+</section>
+<section id="decisions">
 <h2>Decisions</h2>
 <table><thead><tr><th>Id</th><th>Question</th><th>Rules</th><th>Answer</th><th>By</th><th>When (UTC)</th><th>Reason</th></tr></thead><tbody>
 <tr><td>D1</td><td>Should the administrator require every administrator account to register a second sign-in step (MFA)?</td><td>R3</td><td class="a yes">Yes</td><td>Rina Manager (synthetic)</td><td>2026-11-22T09:00:00Z</td><td></td></tr>
@@ -101,6 +105,8 @@ footer { margin-top: 40px; font-size: 0.8rem; color: #57606a; }</style>
 <tr><td>D5</td><td>Should the administrator remove the guest accounts that have not signed in?</td><td>R4</td><td class="a yes">Yes</td><td>Rina Manager (synthetic)</td><td>2026-11-22T09:04:00Z</td><td></td></tr>
 <tr><td>D6</td><td>Should the administrator review the unused licences and return the ones the review finds not needed?</td><td>R1, R2, R5</td><td class="a open">open</td><td></td><td></td><td></td></tr>
 </tbody></table>
+</section>
+<section id="worklist">
 <h2>The work list</h2>
 <p>Only the decisions answered Yes. It is a list for a person; nothing here has been changed in any tenant.</p>
 <table><thead><tr><th>Decision</th><th>Rule</th><th>Account or item</th><th>Detail</th><th>What to review</th><th>Decided by</th><th>When (UTC)</th></tr></thead><tbody>
@@ -121,6 +127,7 @@ footer { margin-top: 40px; font-size: 0.8rem; color: #57606a; }</style>
 <li>D4: answered No by Rina Manager (synthetic) at 2026-11-22T09:03:00Z. Reason: The policies stay in report-only mode until the help desk has read what they would block.</li>
 <li>D6: still open, no answer recorded.</li>
 </ul>
+</section>
 <footer>Written by New-HygieneReport.ps1 from the findings summary with sha256 330d8e1ceb7d0547aefa6b2d6fdb0e88151241a6623c22575af8f493508af561. No saving in money is shown or promised.</footer>
 </main></body>
 </html>

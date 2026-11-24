@@ -37,14 +37,16 @@
 
     Where a saved answer came from is stated by its meta file (the answer's name with .meta.json), and the label is
     earned: "Recorded" only when the meta file says origin "recorded" and both the answer's sha256 and the request's
-    sha256 match the ones it holds; "Constructed, not from a model" when it says origin "constructed" and both match;
-    otherwise "Unverified", with the reason.
+    sha256 match the ones it holds (the label names the model and the date; how the answer was obtained goes into the
+    report); "Constructed, not from a model" when it says origin "constructed" and both match; otherwise "Unverified",
+    with the reason. The default answer is recordings/brief.recorded.md, a recorded answer to the request the shipped
+    data gives.
 
     It writes brief.md, brief-report.json and a byte-for-byte copy of the summary (findings-summary.json) into a new
     folder, so that the decisions recorded later are bound to the exact summary the brief was written from.
 
 .EXAMPLE
-    pwsh -File New-ManagerBrief.ps1 -SummaryJson <findings folder>/findings-summary.json -UsersCsv data/users.synthetic.csv -Recorded recordings/brief.constructed.md -OutDir <new folder>
+    pwsh -File New-ManagerBrief.ps1 -SummaryJson <findings folder>/findings-summary.json -UsersCsv data/users.synthetic.csv -OutDir <new folder>
 .EXAMPLE
     pwsh -File New-ManagerBrief.ps1 -SummaryJson examples/findings/findings-summary.json -UsersCsv data/users.synthetic.csv -WriteRequest request.txt
 #>
@@ -55,7 +57,7 @@ param(
     [Parameter(Mandatory, ParameterSetName = 'Brief')] [string] $OutDir,
     [Parameter(Mandatory, ParameterSetName = 'Request')] [string] $WriteRequest,
     [Parameter(ParameterSetName = 'Brief')] [ValidateSet('Recorded', 'Anthropic')] [string] $Backend = 'Recorded',
-    [Parameter(ParameterSetName = 'Brief')] [string] $Recorded = (Join-Path $PSScriptRoot 'recordings/brief.constructed.md'),
+    [Parameter(ParameterSetName = 'Brief')] [string] $Recorded = (Join-Path $PSScriptRoot 'recordings/brief.recorded.md'),
     [Parameter(ParameterSetName = 'Brief')] [string] $RecordedMeta = '',
     [string] $Prompt = (Join-Path $PSScriptRoot 'prompt-brief.txt'),
     [Parameter(ParameterSetName = 'Brief')] [string] $FallbackTemplate = (Join-Path $PSScriptRoot 'fallback-brief.tmpl'),
@@ -125,6 +127,7 @@ function Invoke-AnthropicMessage([string] $Text) {
 
 # Where the text came from, and the label it has earned.
 $answerSha = ''
+$obtained = $null
 if ($Backend -eq 'Recorded') {
     $answer = Get-Content -LiteralPath $Recorded -Raw -Encoding utf8
     if ($null -eq $answer) { $answer = '' }
@@ -141,7 +144,8 @@ if ($Backend -eq 'Recorded') {
             $label = 'Unverified: the answer file does not have the sha256 its meta file holds'
         } elseif ((Get-Field $meta 'origin') -eq 'recorded') {
             $origin = 'recorded'
-            $label = 'Recorded: {0}, {1}, on {2}' -f (Get-Field $meta 'model'), (Get-Field $meta 'obtained'), (Get-Field $meta 'recorded_on')
+            $label = 'Recorded: {0}, on {1}' -f (Get-Field $meta 'model'), (Get-Field $meta 'recorded_on')
+            $obtained = Get-Field $meta 'obtained'
         } elseif ((Get-Field $meta 'origin') -eq 'constructed') {
             $origin = 'constructed'
             $label = 'Constructed, not from a model'
@@ -223,7 +227,7 @@ Write-TextFile (Join-Path $OutDir 'brief.md') $brief
 $report = [ordered]@{
     backend = $Backend; model = $(if ($origin -eq 'recorded') { Get-Field $meta 'model' } elseif ($origin -eq 'live') { $Model } else { $null })
     answer_file = $(if ($Backend -eq 'Recorded') { Split-Path $Recorded -Leaf } else { $null })
-    origin = $origin; origin_label = $label; answer_sha256 = $answerSha
+    origin = $origin; origin_label = $label; obtained = $obtained; answer_sha256 = $answerSha
     request_sha256 = $sha; personal_values_in_request = $leaks.Count
     ai_text_accepted = $accepted; problems = @($problems)
     brief_source = $(if ($accepted) { 'the checked text' } else { 'the fixed template' })

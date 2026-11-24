@@ -6,7 +6,7 @@
 .DESCRIPTION
     It removes the folder named examples beside this script, and only that folder, then runs Invoke-Demo.ps1 into it
     in this process, so the run keeps this session's culture. The files must come out byte for byte the same on every
-    machine, day, time zone and culture; the CI workflow runs this script and fails on any difference with git.
+    machine, day, time zone and culture; the CI workflow is set to run this script and to fail on any difference git shows.
 
 .EXAMPLE
     pwsh -File Update-Examples.ps1

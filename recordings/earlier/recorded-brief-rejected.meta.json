@@ -1,0 +1,9 @@
+{
+  "origin": "recorded",
+  "model": "claude-haiku-5-5",
+  "obtained": "a Claude Code subagent on that model, given the request text as its whole prompt",
+  "recorded_on": "2026-11-23",
+  "request_sha256": "12363a8e5f91e572a60ea8d0beb5397eac8a7969bace6f5d1917612caa2d1fea",
+  "answer_sha256": "6132b8a2a81a0dae39a50cde27ccce469088c544d578dc2065fa50cdb9d67a74",
+  "note": "The answer is saved unedited. A test checks that the script still builds the request with this sha256."
+}

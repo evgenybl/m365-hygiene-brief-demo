@@ -1,0 +1,121 @@
+{
+  "as_of": "2026-11-21",
+  "users_checked": 13,
+  "thresholds": {
+    "stale_days": 90,
+    "new_account_grace_days": 30
+  },
+  "cost_note": "synthetic units, invented for the demo; not a vendor price",
+  "reclaimable_monthly_cost_synthetic": 390.0,
+  "rules": [
+    {
+      "id": "R1",
+      "title": "Enabled and licensed, no sign-in for more than 90 days",
+      "count": 2,
+      "monthly_cost_synthetic": 230.0,
+      "items": [
+        {
+          "ref": "user-001",
+          "department": "Sales",
+          "days_since_sign_in": 143,
+          "licenses": [
+            "M365_BUSINESS_PREMIUM"
+          ],
+          "monthly_cost_synthetic": 100.0
+        },
+        {
+          "ref": "user-002",
+          "department": "Sales",
+          "days_since_sign_in": 190,
+          "licenses": [
+            "M365_BUSINESS_STANDARD",
+            "VISIO_PLAN2"
+          ],
+          "monthly_cost_synthetic": 130.0
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "title": "Disabled but still licensed",
+      "count": 1,
+      "monthly_cost_synthetic": 100.0,
+      "items": [
+        {
+          "ref": "user-003",
+          "department": "Operations",
+          "days_since_sign_in": 264,
+          "licenses": [
+            "M365_BUSINESS_PREMIUM"
+          ],
+          "monthly_cost_synthetic": 100.0
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "title": "Administrator without MFA registered",
+      "count": 2,
+      "monthly_cost_synthetic": 0.0,
+      "items": [
+        {
+          "ref": "user-004",
+          "department": "IT",
+          "days_since_sign_in": 3,
+          "licenses": [
+            "M365_BUSINESS_PREMIUM"
+          ],
+          "monthly_cost_synthetic": 0.0
+        },
+        {
+          "ref": "user-005",
+          "department": "Management",
+          "days_since_sign_in": 11,
+          "licenses": [
+            "M365_BUSINESS_PREMIUM"
+          ],
+          "monthly_cost_synthetic": 0.0
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "title": "Guest with no sign-in for more than 90 days, or never",
+      "count": 2,
+      "monthly_cost_synthetic": 0.0,
+      "items": [
+        {
+          "ref": "user-006",
+          "department": "(guest)",
+          "days_since_sign_in": 234,
+          "licenses": [],
+          "monthly_cost_synthetic": 0.0
+        },
+        {
+          "ref": "user-007",
+          "department": "(guest)",
+          "days_since_sign_in": null,
+          "licenses": [],
+          "monthly_cost_synthetic": 0.0
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "title": "Licensed member who never signed in, created more than 30 days ago",
+      "count": 1,
+      "monthly_cost_synthetic": 60.0,
+      "items": [
+        {
+          "ref": "user-008",
+          "department": "Finance",
+          "days_since_sign_in": null,
+          "licenses": [
+            "M365_BUSINESS_STANDARD"
+          ],
+          "monthly_cost_synthetic": 60.0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "origin": "constructed",
+  "note": "Constructed, not from a model: written by hand to the request built from the shipped data, so that the checks, the decisions and the pages can be shown. It is to be replaced by a recorded model answer (Add-RecordedBrief.ps1).",
+  "request_sha256": "4a66f63a742bf321c950aa8618353c595d3a158e464fc9609cb21e8db5391cee",
+  "answer_sha256": "98b12fe5cad1d1231932693b25a5008a6b095c0f7ac7cff2e1fe21ac1afaf008"
+}

@@ -11,15 +11,51 @@ permissions:
 
 jobs:
   tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
-      - name: Run the tests
-        shell: pwsh
-        run: ./Test-Demo.ps1 -OutDir out-test
-      - name: Run the two steps as the README names them
+
+      - name: The PowerShell this runner has
         shell: pwsh
         run: |
-          ./Get-TenantHygieneFindings.ps1 -UsersCsv users.synthetic.csv -SkusCsv skus.synthetic.csv -AsOf 2026-11-21 -OutDir out-findings
-          ./New-ManagerBrief.ps1 -SummaryJson out-findings/findings-summary.json -UsersCsv users.synthetic.csv -OutDir out-brief
+          $PSVersionTable.PSVersion
+          "PowerShell $($PSVersionTable.PSVersion) on $($PSVersionTable.OS)"
+
+      - name: The tests
+        shell: pwsh
+        run: ./Test-Demo.ps1
+
+      - name: The whole demo
+        shell: pwsh
+        run: ./Invoke-Demo.ps1 -OutDir out-demo
+
+      - name: The examples, written again and compared with git
+        shell: pwsh
+        run: |
+          ./Update-Examples.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --exit-code -- examples
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          $extra = git status --porcelain -- examples
+          if ($extra) { $extra; 'examples/ holds a file the run did not write, or lacks one it wrote'; exit 1 }
+
+      - name: The examples again, in another time zone and culture (Linux takes them from TZ and LANG)
+        if: runner.os == 'Linux'
+        shell: pwsh
+        env:
+          TZ: Pacific/Kiritimati
+          LANG: de_DE.UTF-8
+          LC_ALL: de_DE.UTF-8
+        run: |
+          "culture $([cultureinfo]::CurrentCulture.Name) | time zone $([TimeZoneInfo]::Local.Id) | now $([datetime]::Now.ToString('o'))"
+          ./Update-Examples.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --exit-code -- examples
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          $extra = git status --porcelain -- examples
+          if ($extra) { $extra; exit 1 }

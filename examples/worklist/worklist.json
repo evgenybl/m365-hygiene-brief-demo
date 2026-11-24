@@ -1,6 +1,6 @@
 {
-  "summary_sha256": "330d8e1ceb7d0547aefa6b2d6fdb0e88151241a6623c22575af8f493508af561",
-  "decisions_sha256": "8fbcfd2355bacef29534d60422a60886599714292535a6daa699032f28e8b44c",
+  "summary_sha256": "230589ac56e5d22b4eac4bd2dfd80676f892a72d4ec2801765fcc0426be3548f",
+  "decisions_sha256": "6341e6a64387668cf9083523dd89c57aa1757e76bfa3857a9d3a23f227fff7bc",
   "yes": [
     "D1",
     "D2",
@@ -12,48 +12,45 @@
       "decision": "D4",
       "by": "Rina Manager (synthetic)",
       "at": "2026-11-22T09:03:00Z",
-      "reason": "The policies stay in report-only mode until the help desk has read what they would block."
+      "reason": "The policies stay in report-only mode until the help desk has read what they would block.",
+      "answers": 1,
+      "earlier": ""
     }
   ],
   "open": [
     "D6"
   ],
+  "not_checked": [],
   "items": [
     {
       "Decision": "D1",
+      "Question": "Should the administrator require every administrator account to register a second sign-in step (MFA)?",
       "Rule": "R3",
       "Scope": "account",
       "Item": "bina.bet@demo.example.com",
       "Name": "Bina Bet (synthetic)",
       "Detail": "",
-      "WhatToReview": "Register a second sign-in step (MFA) for this administrator, or remove the role.",
+      "WhatToReview": "Can this administrator register a second sign-in step (MFA), or does the account still need its role?",
       "DecidedBy": "Rina Manager (synthetic)",
-      "DecidedAt": "2026-11-22T09:00:00Z"
+      "DecidedAt": "2026-11-22T09:00:00Z",
+      "Answers": 1
     },
     {
       "Decision": "D1",
+      "Question": "Should the administrator require every administrator account to register a second sign-in step (MFA)?",
       "Rule": "R3",
       "Scope": "account",
       "Item": "roni.lamed@demo.example.com",
       "Name": "Roni Lamed (synthetic)",
       "Detail": "",
-      "WhatToReview": "Register a second sign-in step (MFA) for this administrator, or remove the role.",
+      "WhatToReview": "Can this administrator register a second sign-in step (MFA), or does the account still need its role?",
       "DecidedBy": "Rina Manager (synthetic)",
-      "DecidedAt": "2026-11-22T09:00:00Z"
-    },
-    {
-      "Decision": "D1",
-      "Rule": "R3",
-      "Scope": "account",
-      "Item": "rotem.samekh@demo.example.com",
-      "Name": "Rotem Samekh (synthetic)",
-      "Detail": "",
-      "WhatToReview": "Register a second sign-in step (MFA) for this administrator, or remove the role.",
-      "DecidedBy": "Rina Manager (synthetic)",
-      "DecidedAt": "2026-11-22T09:00:00Z"
+      "DecidedAt": "2026-11-22T09:00:00Z",
+      "Answers": 1
     },
     {
       "Decision": "D2",
+      "Question": "Should the administrator review who holds the Global Administrator role and bring it down to 4 accounts or fewer?",
       "Rule": "R6",
       "Scope": "tenant",
       "Item": "bina.bet@demo.example.com",
@@ -61,10 +58,12 @@
       "Detail": "Holds Global Administrator (enabled); 5 accounts hold it, limit 4",
       "WhatToReview": "Does this account need the Global Administrator role? Bring the holders down to the limit.",
       "DecidedBy": "Rina Manager (synthetic)",
-      "DecidedAt": "2026-11-22T09:01:00Z"
+      "DecidedAt": "2026-11-22T09:01:00Z",
+      "Answers": 1
     },
     {
       "Decision": "D2",
+      "Question": "Should the administrator review who holds the Global Administrator role and bring it down to 4 accounts or fewer?",
       "Rule": "R6",
       "Scope": "tenant",
       "Item": "rotem.samekh@demo.example.com",
@@ -72,10 +71,12 @@
       "Detail": "Holds Global Administrator (disabled); 5 accounts hold it, limit 4",
       "WhatToReview": "Does this account need the Global Administrator role? Bring the holders down to the limit.",
       "DecidedBy": "Rina Manager (synthetic)",
-      "DecidedAt": "2026-11-22T09:01:00Z"
+      "DecidedAt": "2026-11-22T09:01:00Z",
+      "Answers": 1
     },
     {
       "Decision": "D2",
+      "Question": "Should the administrator review who holds the Global Administrator role and bring it down to 4 accounts or fewer?",
       "Rule": "R6",
       "Scope": "tenant",
       "Item": "adi.vav@demo.example.com",
@@ -83,10 +84,12 @@
       "Detail": "Holds Global Administrator (enabled); 5 accounts hold it, limit 4",
       "WhatToReview": "Does this account need the Global Administrator role? Bring the holders down to the limit.",
       "DecidedBy": "Rina Manager (synthetic)",
-      "DecidedAt": "2026-11-22T09:01:00Z"
+      "DecidedAt": "2026-11-22T09:01:00Z",
+      "Answers": 1
     },
     {
       "Decision": "D2",
+      "Question": "Should the administrator review who holds the Global Administrator role and bring it down to 4 accounts or fewer?",
       "Rule": "R6",
       "Scope": "tenant",
       "Item": "ofir.resh@demo.example.com",
@@ -94,10 +97,12 @@
       "Detail": "Holds Global Administrator (enabled); 5 accounts hold it, limit 4",
       "WhatToReview": "Does this account need the Global Administrator role? Bring the holders down to the limit.",
       "DecidedBy": "Rina Manager (synthetic)",
-      "DecidedAt": "2026-11-22T09:01:00Z"
+      "DecidedAt": "2026-11-22T09:01:00Z",
+      "Answers": 1
     },
     {
       "Decision": "D2",
+      "Question": "Should the administrator review who holds the Global Administrator role and bring it down to 4 accounts or fewer?",
       "Rule": "R6",
       "Scope": "tenant",
       "Item": "roni.qof@demo.example.com",
@@ -105,21 +110,25 @@
       "Detail": "Holds Global Administrator (enabled); 5 accounts hold it, limit 4",
       "WhatToReview": "Does this account need the Global Administrator role? Bring the holders down to the limit.",
       "DecidedBy": "Rina Manager (synthetic)",
-      "DecidedAt": "2026-11-22T09:01:00Z"
+      "DecidedAt": "2026-11-22T09:01:00Z",
+      "Answers": 1
     },
     {
       "Decision": "D3",
+      "Question": "Should the administrator switch on policy-001, which is in report-only mode now, so that it blocks legacy authentication for all users?",
       "Rule": "R7",
       "Scope": "tenant",
       "Item": "(the tenant)",
       "Name": "",
-      "Detail": "No enabled policy blocks legacy authentication; 6 policies checked",
-      "WhatToReview": "Enforce a Conditional Access policy that blocks legacy authentication (start it in report-only mode, then switch it on).",
+      "Detail": "No enforced policy blocks legacy authentication, and security defaults are off; 7 policies checked; in report-only mode, would block it: Block legacy authentication (synthetic) (policy id 00000000-0000-4000-8000-000000000002, policy-001)",
+      "WhatToReview": "Is legacy authentication still in use (the sign-in logs show the client app)? If not, switch on a policy that blocks it, such as the report-only one named here.",
       "DecidedBy": "Rina Manager (synthetic)",
-      "DecidedAt": "2026-11-22T09:02:00Z"
+      "DecidedAt": "2026-11-22T09:02:00Z",
+      "Answers": 1
     },
     {
       "Decision": "D5",
+      "Question": "Should the administrator remove the guest accounts that have no recent sign-in on record?",
       "Rule": "R4",
       "Scope": "account",
       "Item": "tamar.tav_partner.example.com#EXT#@demo.example.com",
@@ -127,10 +136,12 @@
       "Detail": "",
       "WhatToReview": "Does the guest still need access? If not, remove the guest.",
       "DecidedBy": "Rina Manager (synthetic)",
-      "DecidedAt": "2026-11-22T09:04:00Z"
+      "DecidedAt": "2026-11-22T09:04:00Z",
+      "Answers": 1
     },
     {
       "Decision": "D5",
+      "Question": "Should the administrator remove the guest accounts that have no recent sign-in on record?",
       "Rule": "R4",
       "Scope": "account",
       "Item": "keren.bet_partner.example.com#EXT#@demo.example.com",
@@ -138,7 +149,8 @@
       "Detail": "",
       "WhatToReview": "Does the guest still need access? If not, remove the guest.",
       "DecidedBy": "Rina Manager (synthetic)",
-      "DecidedAt": "2026-11-22T09:04:00Z"
+      "DecidedAt": "2026-11-22T09:04:00Z",
+      "Answers": 1
     }
   ]
 }

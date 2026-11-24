@@ -1,7 +1,8 @@
 {
   "as_of": "2026-11-21",
   "users_checked": 60,
-  "policies_checked": 6,
+  "policies_checked": 7,
+  "security_defaults": "off",
   "thresholds": {
     "stale_days": 90,
     "new_account_grace_days": 30,
@@ -9,6 +10,7 @@
     "report_only_days": 30
   },
   "cost_note": "synthetic units, invented for the demo; not a vendor price and not money",
+  "sign_in_note": "A last successful sign-in read from Microsoft Graph is not backfilled before 1 December 2023, so no sign-in on record can also mean an earlier last sign-in.",
   "reclaimable_monthly_cost_synthetic": "169.4",
   "rules": [
     {
@@ -116,10 +118,10 @@
     },
     {
       "id": "R3",
-      "title": "Administrator without MFA registered",
+      "title": "Enabled administrator without MFA registered",
       "kind": "security",
       "scope": "account",
-      "count": 3,
+      "count": 2,
       "monthly_cost_synthetic": "0",
       "items": [
         {
@@ -139,21 +141,12 @@
             "SYN_SUITE_STANDARD"
           ],
           "monthly_cost_synthetic": "0"
-        },
-        {
-          "ref": "user-010",
-          "department": "Operations",
-          "days_since_sign_in": 200,
-          "licenses": [
-            "SYN_SUITE_PLUS"
-          ],
-          "monthly_cost_synthetic": "0"
         }
       ]
     },
     {
       "id": "R4",
-      "title": "Guest with no sign-in for more than 90 days, or never",
+      "title": "Guest with no sign-in for more than 90 days, or none on record",
       "kind": "security",
       "scope": "account",
       "count": 2,
@@ -177,7 +170,7 @@
     },
     {
       "id": "R5",
-      "title": "Licensed member who never signed in, created more than 30 days ago",
+      "title": "Licensed member with no sign-in on record, created more than 30 days ago",
       "kind": "cost",
       "scope": "account",
       "count": 1,
@@ -211,7 +204,7 @@
     },
     {
       "id": "R7",
-      "title": "No enabled Conditional Access policy blocks legacy authentication",
+      "title": "No enforced Conditional Access policy blocks legacy authentication, and security defaults are off",
       "kind": "security",
       "scope": "tenant",
       "count": 1,
@@ -219,13 +212,17 @@
       "items": [
         {
           "ref": "tenant",
-          "policies_checked": 6
+          "policies_checked": 7,
+          "security_defaults": "off",
+          "report_only_policies_that_would_block_it": [
+            "policy-001"
+          ]
         }
       ]
     },
     {
       "id": "R8",
-      "title": "Conditional Access policy in report-only mode, created more than 30 days ago",
+      "title": "Conditional Access policy created more than 30 days ago and still in report-only mode",
       "kind": "security",
       "scope": "policy",
       "count": 2,
@@ -259,21 +256,21 @@
     },
     {
       "id": "D3",
-      "question": "Should the administrator turn on a Conditional Access policy that blocks legacy authentication for all users?",
+      "question": "Should the administrator switch on policy-001, which is in report-only mode now, so that it blocks legacy authentication for all users?",
       "rules": [
         "R7"
       ]
     },
     {
       "id": "D4",
-      "question": "Should the administrator review each Conditional Access policy left in report-only mode, to switch it on or remove it?",
+      "question": "Should the administrator review each Conditional Access policy left in report-only mode, to switch it on or remove it (policy-001 is also in the question about legacy authentication)?",
       "rules": [
         "R8"
       ]
     },
     {
       "id": "D5",
-      "question": "Should the administrator remove the guest accounts that have not signed in?",
+      "question": "Should the administrator remove the guest accounts that have no recent sign-in on record?",
       "rules": [
         "R4"
       ]

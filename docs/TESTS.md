@@ -89,7 +89,7 @@ Pasted from a run of `pwsh -NoProfile -File Test-Demo.ps1` with PowerShell 7.7.0
 ```text
 PASS no file holds a key-shaped or token-shaped literal
 PASS no line reads like an assigned credential (token, secret, password or key = a literal)
-PASS docs/TESTS.md shows the result line of this run, pasted from a run
+PASS docs/TESTS.md shows the result line of this run, pasted from a run (every result line it shows is this run's)
 RESULT 193 passed, 0 failed
 ```
 

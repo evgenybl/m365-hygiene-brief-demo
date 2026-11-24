@@ -1,0 +1,2 @@
+PolicyId,DisplayName,State,CreatedDate,ClientAppTypes,IncludeUsers,IncludeApplications,GrantControls,OtherConditions
+00000000-0000-4000-8000-00000000a001,Block legacy authentication (synthetic),enabled,2025-01-15T08:00:00Z,exchangeActiveSync;other,All,All,block,

@@ -2,6 +2,9 @@
 # system, answers each request from a script block, records every request it receives (method, target and headers),
 # and stops when the child process it serves has ended. Nothing it serves leaves this computer. It defines functions
 # only; it is dot-sourced by Test-Demo.ps1 and Invoke-Demo.ps1, never by a script that reads a tenant.
+#
+# Its Microsoft Graph answers serve the collector, Export-TenantSnapshot.ps1, which is labelled: Mock: written from
+# Microsoft's documentation, tested against a local mock, never run against a tenant.
 
 function Invoke-WithLocalMock {
     param(
@@ -90,9 +93,11 @@ function New-GraphMockAnswer {
         '/v1.0/roleManagement/directory/roleAssignments' = 'roleAssignments.json'
         '/v1.0/reports/authenticationMethods/userRegistrationDetails' = 'userRegistrationDetails.json'
         '/v1.0/identity/conditionalAccess/policies' = 'policies.json'
+        '/v1.0/policies/identitySecurityDefaultsEnforcementPolicy' = 'securityDefaults.json'
     }
     $names = @{ users = '/v1.0/users'; licences = '/v1.0/subscribedSkus'; roles = '/v1.0/roleManagement/directory/roleAssignments'
-        registration = '/v1.0/reports/authenticationMethods/userRegistrationDetails'; policies = '/v1.0/identity/conditionalAccess/policies' }
+        registration = '/v1.0/reports/authenticationMethods/userRegistrationDetails'; policies = '/v1.0/identity/conditionalAccess/policies'
+        securityDefaults = '/v1.0/policies/identitySecurityDefaultsEnforcementPolicy' }
     $throttlePath = if ($Throttle) { $names[$Throttle] } else { '' }
     $failPath = if ($Fail) { $names[$Fail] } else { '' }
     {

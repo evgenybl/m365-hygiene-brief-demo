@@ -1,0 +1,76 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users(id,userPrincipalName,displayName,department,userType,accountEnabled,createdDateTime,assignedLicenses,signInActivity)",
+  "@odata.nextLink": "{base}/v1.0/users?$select=id,userPrincipalName,displayName,department,userType,accountEnabled,createdDateTime,assignedLicenses,signInActivity&$top=500&$skiptoken=mock-page-2",
+  "value": [
+    {
+      "id": "00000000-0000-4000-8000-000000000101",
+      "userPrincipalName": "mira.alef@demo.example.com",
+      "displayName": "Mira Alef (synthetic)",
+      "department": "IT",
+      "userType": "Member",
+      "accountEnabled": true,
+      "createdDateTime": "2023-03-01T10:00:00Z",
+      "assignedLicenses": [
+        { "disabledPlans": [], "skuId": "00000000-0000-4000-8000-00000000c001" }
+      ],
+      "signInActivity": {
+        "lastSignInDateTime": "2026-11-20T08:00:00Z",
+        "lastSignInRequestId": "00000000-0000-4000-8000-00000000e001",
+        "lastNonInteractiveSignInDateTime": "0001-01-01T00:00:00Z",
+        "lastNonInteractiveSignInRequestId": "",
+        "lastSuccessfulSignInDateTime": "2026-11-20T08:00:00Z",
+        "lastSuccessfulSignInRequestId": "00000000-0000-4000-8000-00000000e001"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000102",
+      "userPrincipalName": "ben.bet@demo.example.com",
+      "displayName": "Ben Bet (synthetic)",
+      "department": "Sales",
+      "userType": "Member",
+      "accountEnabled": true,
+      "createdDateTime": "2024-02-11T09:30:00Z",
+      "assignedLicenses": [
+        { "disabledPlans": [], "skuId": "00000000-0000-4000-8000-00000000c002" }
+      ],
+      "signInActivity": {
+        "lastSignInDateTime": "2026-01-05T07:12:00Z",
+        "lastSignInRequestId": "00000000-0000-4000-8000-00000000e002",
+        "lastNonInteractiveSignInDateTime": "0001-01-01T00:00:00Z",
+        "lastNonInteractiveSignInRequestId": "",
+        "lastSuccessfulSignInDateTime": "",
+        "lastSuccessfulSignInRequestId": ""
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000103",
+      "userPrincipalName": "gil.gimel_partner.example.com#EXT#@demo.example.com",
+      "displayName": "Gil Gimel (synthetic guest)",
+      "department": null,
+      "userType": "Guest",
+      "accountEnabled": true,
+      "createdDateTime": "2025-12-01T12:00:00Z",
+      "assignedLicenses": []
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000104",
+      "userPrincipalName": "dvora.dalet@demo.example.com",
+      "displayName": "Dvora Dalet (synthetic)",
+      "department": "Operations",
+      "userType": "Member",
+      "accountEnabled": false,
+      "createdDateTime": "2022-05-20T14:00:00Z",
+      "assignedLicenses": [
+        { "disabledPlans": [], "skuId": "00000000-0000-4000-8000-00000000c001" }
+      ],
+      "signInActivity": {
+        "lastSignInDateTime": "2026-04-02T16:45:00Z",
+        "lastSignInRequestId": "00000000-0000-4000-8000-00000000e004",
+        "lastNonInteractiveSignInDateTime": "2026-04-02T17:00:00Z",
+        "lastNonInteractiveSignInRequestId": "00000000-0000-4000-8000-00000000e005",
+        "lastSuccessfulSignInDateTime": "2026-04-02T16:45:00Z",
+        "lastSuccessfulSignInRequestId": "00000000-0000-4000-8000-00000000e004"
+      }
+    }
+  ]
+}

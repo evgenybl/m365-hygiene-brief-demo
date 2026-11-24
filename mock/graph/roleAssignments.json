@@ -1,0 +1,45 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#roleManagement/directory/roleAssignments(principal())",
+  "value": [
+    {
+      "id": "mock-assignment-1",
+      "principalId": "00000000-0000-4000-8000-000000000101",
+      "resourceScope": "/",
+      "directoryScopeId": "/",
+      "roleDefinitionId": "62e90394-69f5-4237-9190-012177145e10",
+      "principal": {
+        "@odata.type": "#microsoft.graph.user",
+        "id": "00000000-0000-4000-8000-000000000101",
+        "accountEnabled": true,
+        "displayName": "Mira Alef (synthetic)",
+        "userType": "Member"
+      }
+    },
+    {
+      "id": "mock-assignment-2",
+      "principalId": "00000000-0000-4000-8000-000000000104",
+      "resourceScope": "/",
+      "directoryScopeId": "/",
+      "roleDefinitionId": "62e90394-69f5-4237-9190-012177145e10",
+      "principal": {
+        "@odata.type": "#microsoft.graph.user",
+        "id": "00000000-0000-4000-8000-000000000104",
+        "accountEnabled": false,
+        "displayName": "Dvora Dalet (synthetic)",
+        "userType": "Member"
+      }
+    },
+    {
+      "id": "mock-assignment-3",
+      "principalId": "00000000-0000-4000-8000-000000000201",
+      "resourceScope": "/",
+      "directoryScopeId": "/",
+      "roleDefinitionId": "62e90394-69f5-4237-9190-012177145e10",
+      "principal": {
+        "@odata.type": "#microsoft.graph.group",
+        "id": "00000000-0000-4000-8000-000000000201",
+        "displayName": "Emergency administrators (synthetic group)"
+      }
+    }
+  ]
+}

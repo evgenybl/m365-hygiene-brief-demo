@@ -1,0 +1,45 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users(id,userPrincipalName,displayName,department,userType,accountEnabled,createdDateTime,assignedLicenses,signInActivity)",
+  "value": [
+    {
+      "id": "00000000-0000-4000-8000-000000000105",
+      "userPrincipalName": "hen.he@demo.example.com",
+      "displayName": "Hen He (synthetic)",
+      "department": "Operations",
+      "userType": "Member",
+      "accountEnabled": true,
+      "createdDateTime": null,
+      "assignedLicenses": [
+        { "disabledPlans": [], "skuId": "00000000-0000-4000-8000-00000000c002" }
+      ],
+      "signInActivity": {
+        "lastSignInDateTime": "2026-11-19T06:20:00Z",
+        "lastSignInRequestId": "00000000-0000-4000-8000-00000000e006",
+        "lastNonInteractiveSignInDateTime": "2026-11-19T06:25:00Z",
+        "lastNonInteractiveSignInRequestId": "00000000-0000-4000-8000-00000000e007",
+        "lastSuccessfulSignInDateTime": "2026-11-19T06:25:00Z",
+        "lastSuccessfulSignInRequestId": "00000000-0000-4000-8000-00000000e007"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000106",
+      "userPrincipalName": "vered.vav@demo.example.com",
+      "displayName": "Vered Vav (synthetic)",
+      "department": "Finance",
+      "userType": "Member",
+      "accountEnabled": true,
+      "createdDateTime": "2024-08-08T08:08:00Z",
+      "assignedLicenses": [
+        { "disabledPlans": [], "skuId": "00000000-0000-4000-8000-00000000c002" }
+      ],
+      "signInActivity": {
+        "lastSignInDateTime": "2026-09-01T10:00:00Z",
+        "lastSignInRequestId": "00000000-0000-4000-8000-00000000e008",
+        "lastNonInteractiveSignInDateTime": "0001-01-01T00:00:00Z",
+        "lastNonInteractiveSignInRequestId": "",
+        "lastSuccessfulSignInDateTime": "2026-09-01T10:00:00Z",
+        "lastSuccessfulSignInRequestId": "00000000-0000-4000-8000-00000000e008"
+      }
+    }
+  ]
+}

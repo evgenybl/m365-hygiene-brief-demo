@@ -94,7 +94,9 @@ function ConvertTo-BriefHtml([string] $Text) {
 $asOf = $summary['as_of']
 $dataLabel = if ($DataKind -eq 'Synthetic') { 'Synthetic data: invented accounts at demo.example.com' } else { 'Data exported from a tenant' }
 $originLabel = [string]$report['origin_label']
-$briefSource = if ($report['ai_text_accepted']) { 'The checked text. Origin: ' + $originLabel } else {
+$obtained = [string]$report['obtained']
+$howObtained = if ($obtained) { ' How it was obtained: ' + $obtained } else { '' }
+$briefSource = if ($report['ai_text_accepted']) { 'The checked text. Origin: ' + $originLabel + '.' + $howObtained } else {
     'The fixed template, filled with the script''s own figures, because the text did not pass the checks (' + (@($report['problems']) -join '; ') + '). The text it replaced: ' + $originLabel }
 
 $ruleRows = foreach ($r in @($summary['rules'])) {
@@ -162,14 +164,16 @@ function New-Page([string] $Title, [string] $Warning, [object[]] $Sections) {
     ) | ForEach-Object { Expand-Lines $_ }
 }
 
-$briefSection = @('<h2>The brief</h2>', ('<p class="source">{0}</p>' -f (Esc $briefSource)), '<div class="brief">', (ConvertTo-BriefHtml $briefText), '</div>')
-$findingsSection = @('<h2>Findings by rule</h2>', '<table><thead><tr><th>Rule</th><th>What it finds</th><th>Kind</th><th>About</th><th>Count</th><th>Invented units a month</th></tr></thead><tbody>') +
-    @($ruleRows) + @($total, '</tbody></table>', ('<p class="source">{0}</p>' -f (Esc $summary['cost_note'])))
+# Each part of a page is a section with an id, so that one part can be captured or linked on its own.
+function New-Section([string] $Id, [object[]] $Lines) { @("<section id=`"$Id`">") + @(Expand-Lines $Lines) + @('</section>') }
+$briefSection = New-Section 'brief' @('<h2>The brief</h2>', ('<p class="source">{0}</p>' -f (Esc $briefSource)), '<div class="brief">', (ConvertTo-BriefHtml $briefText), '</div>')
+$findingsSection = New-Section 'findings' (@('<h2>Findings by rule</h2>', '<table><thead><tr><th>Rule</th><th>What it finds</th><th>Kind</th><th>About</th><th>Count</th><th>Invented units a month</th></tr></thead><tbody>') +
+    @($ruleRows) + @($total, '</tbody></table>', ('<p class="source">{0}</p>' -f (Esc $summary['cost_note']))))
 $decHead = '<table><thead><tr><th>Id</th><th>Question</th><th>Rules</th><th>Answer</th><th>By</th><th>When (UTC)</th>{0}</tr></thead><tbody>'
-$managerDecisions = if (@($summary['decisions']).Count) { @('<h2>Decisions</h2>', ($decHead -f ''), @(Get-DecisionRows $false), '</tbody></table>',
-    '<p class="source">A name is shown as the person typed it; it is not checked against any directory.</p>') } else { @('<h2>Decisions</h2>', $noDecisions) }
+$managerDecisions = New-Section 'decisions' $(if (@($summary['decisions']).Count) { @('<h2>Decisions</h2>', ($decHead -f ''), @(Get-DecisionRows $false), '</tbody></table>',
+    '<p class="source">A name is shown as the person typed it; it is not checked against any directory.</p>') } else { @('<h2>Decisions</h2>', $noDecisions) })
 $manager = New-Page 'Microsoft 365 hygiene brief' '' (@($briefSection) + @($findingsSection) + @($managerDecisions) +
-    @('<h2>About this page</h2>', '<p>People appear only as stand-ins (user-001 ...) and policies as policy-001 ... . The administrator keeps the names on a separate page that stays on their computer.</p>'))
+    @(New-Section 'about' @('<h2>About this page</h2>', '<p>People appear only as stand-ins (user-001 ...) and policies as policy-001 ... . The administrator keeps the names on a separate page that stays on their computer.</p>')))
 
 # The manager's page may leave the computer: no address or full name from the users table may be on it, except a
 # name a person typed for a decision, which is shown as typed.
@@ -197,14 +201,14 @@ $workRows = foreach ($i in @($worklist['items'])) {
 }
 $notOnList = @(@($worklist['no']) | Where-Object { $_ } | ForEach-Object { '<li>{0}: answered No by {1} at {2}. Reason: {3}</li>' -f (Esc $_['decision']), (Esc $_['by']), (Esc $_['at']), (Esc $_['reason']) }) +
     @(@($worklist['open']) | Where-Object { $_ } | ForEach-Object { '<li>{0}: still open, no answer recorded.</li>' -f (Esc $_) })
-$adminSections = @($briefSection) + @($findingsSection) +
+$adminSections = @($briefSection) + @($findingsSection) + @(New-Section 'names' (
     @('<h2>The findings with names</h2>', '<table><thead><tr><th>Rule</th><th>Name</th><th>Sign-in address</th><th>Department</th><th>Days since sign-in</th><th>Licences</th><th>Invented units</th><th>Detail</th></tr></thead><tbody>') +
-    @($nameRows) + @('</tbody></table>') +
-    $(if (@($summary['decisions']).Count) { @('<h2>Decisions</h2>', ($decHead -f '<th>Reason</th>'), @(Get-DecisionRows $true), '</tbody></table>') } else { @('<h2>Decisions</h2>', $noDecisions) }) +
-    @('<h2>The work list</h2>', '<p>Only the decisions answered Yes. It is a list for a person; nothing here has been changed in any tenant.</p>',
+    @($nameRows) + @('</tbody></table>'))) +
+    @(New-Section 'decisions' $(if (@($summary['decisions']).Count) { @('<h2>Decisions</h2>', ($decHead -f '<th>Reason</th>'), @(Get-DecisionRows $true), '</tbody></table>') } else { @('<h2>Decisions</h2>', $noDecisions) })) +
+    @(New-Section 'worklist' (@('<h2>The work list</h2>', '<p>Only the decisions answered Yes. It is a list for a person; nothing here has been changed in any tenant.</p>',
         '<table><thead><tr><th>Decision</th><th>Rule</th><th>Account or item</th><th>Detail</th><th>What to review</th><th>Decided by</th><th>When (UTC)</th></tr></thead><tbody>') +
     @($workRows) + @('</tbody></table>', '<h3>Not on the work list</h3>') +
-    $(if ($notOnList.Count) { @('<ul>') + $notOnList + @('</ul>') } else { @('<p>Nothing: every decision was answered Yes.</p>') })
+    $(if ($notOnList.Count) { @('<ul>') + $notOnList + @('</ul>') } else { @('<p>Nothing: every decision was answered Yes.</p>') })))
 $admin = New-Page 'Microsoft 365 hygiene brief: administrator' 'For the administrator only. This page holds names and sign-in addresses: keep it on this computer and do not send it.' $adminSections
 
 New-Item -ItemType Directory -Path $OutDir | Out-Null

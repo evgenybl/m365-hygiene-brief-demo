@@ -15,11 +15,17 @@
     Add-RecordedBrief.ps1).
 
     Otherwise it gets the text from a backend and checks it. The text is used only if:
-      - every number written in digits appears in the summary. A line that starts with a single digit 1 to 9, then
-        "." or ")", then a space, starts an ordered list, and that digit is not counted. A date counts as its parts.
-      - every stand-in (user-NNN, policy-NNN) and every rule id (R1 ...) in it is one of the summary's own;
-      - every decision id of the summary (D1 ...) appears in it exactly once, and no other decision id does;
-      - no two digit groups are separated only by a space, and every digit is one of 0 to 9;
+      - every run of digits in it is a number the summary holds. Digits count wherever they are: at the start of a
+        line, inside a word ("Microsoft 3657"), in a date (which counts as its parts). Only three things are not
+        counted: a stand-in (user-NNN, policy-NNN), a rule id (R1 ...), and a decision id at the start of its own
+        decision line; and the exact product names "Microsoft 365" and "M365";
+      - every stand-in and every rule id in it is one of the summary's own (a stand-in in any letter case);
+      - every decision of the summary is on a line of its own, exactly once: the line starts with the id (after an
+        optional list marker or bold), then a separator, then the summary's question word for word, and nothing else
+        but an optional closing "Yes or no?". A decision id anywhere else, an id the summary does not hold, a decision
+        left out or named twice, or a question that differs by one word refuses the text. So the brief cannot reword,
+        swap or hide a decision; what it says around the decisions is not checked;
+      - no two digit groups are separated only by a space, and every numeric character is one of 0 to 9;
       - it holds no "@" and no name or sign-in address from the user table: each full display name, address and
         local part, and each part of a name or local part with three letters or more, looked for as a whole word in
         any letter case. A word that occurs as a whole word in the request itself, or a number word from one to
@@ -29,18 +35,21 @@
 
     A text that passes becomes brief.md. A text that fails is not used: brief.md is filled from
     fallback-brief.tmpl with the script's own figures and the summary's own decisions, and the report lists what failed.
+    A rule the summary marks "not checked" is shown so, with what was missing, never as a count of 0.
 
     Backends: Recorded (a saved answer) or Anthropic (the Messages API; the key is read from the ANTHROPIC_API_KEY
-    environment variable and is never printed or written). With Anthropic, the request (the fixed prompt and the
-    stand-in summary) is all that is sent; a failed call, or an answer that did not end normally, is refused (exit 3)
-    and nothing is written. Neither backend e-mails or posts the brief anywhere.
+    environment variable and is never printed or written, with -Debug and -Verbose too). With Anthropic, the request
+    (the fixed prompt and the stand-in summary) is all that is sent, to https://api.anthropic.com or to a server on this
+    computer (for the tests) and nowhere else; a redirect is not followed; a failed call, a redirect, or an answer that
+    did not end normally is refused (exit 3) and nothing is written. Neither backend e-mails or posts the brief anywhere.
 
     Where a saved answer came from is stated by its meta file (the answer's name with .meta.json), and the label is
-    earned: "Recorded" only when the meta file says origin "recorded" and both the answer's sha256 and the request's
-    sha256 match the ones it holds (the label names the model and the date; how the answer was obtained goes into the
-    report); "Constructed, not from a model" when it says origin "constructed" and both match; otherwise "Unverified",
-    with the reason. The default answer is recordings/brief.recorded.md, a recorded answer to the request the shipped
-    data gives.
+    earned: "Recorded" only when the meta file says origin "recorded", both the answer's sha256 and the request's sha256
+    match the ones it holds, and its model name, date (yyyy-MM-dd) and account of how the answer was obtained are well
+    formed (the label names the model and the date; how the answer was obtained goes into the report); "Constructed,
+    not from a model" when it says origin "constructed" and both hashes match; otherwise "Unverified", with the reason.
+    The default answer is recordings/brief.constructed.md, written by hand to the request the shipped data gives; the
+    answers recorded from a model to earlier requests are in recordings/earlier/.
 
     It writes brief.md, brief-report.json and a byte-for-byte copy of the summary (findings-summary.json) into a new
     folder, so that the decisions recorded later are bound to the exact summary the brief was written from.
@@ -57,7 +66,7 @@ param(
     [Parameter(Mandatory, ParameterSetName = 'Brief')] [string] $OutDir,
     [Parameter(Mandatory, ParameterSetName = 'Request')] [string] $WriteRequest,
     [Parameter(ParameterSetName = 'Brief')] [ValidateSet('Recorded', 'Anthropic')] [string] $Backend = 'Recorded',
-    [Parameter(ParameterSetName = 'Brief')] [string] $Recorded = (Join-Path $PSScriptRoot 'recordings/brief.recorded.md'),
+    [Parameter(ParameterSetName = 'Brief')] [string] $Recorded = (Join-Path $PSScriptRoot 'recordings/brief.constructed.md'),
     [Parameter(ParameterSetName = 'Brief')] [string] $RecordedMeta = '',
     [string] $Prompt = (Join-Path $PSScriptRoot 'prompt-brief.txt'),
     [Parameter(ParameterSetName = 'Brief')] [string] $FallbackTemplate = (Join-Path $PSScriptRoot 'fallback-brief.tmpl'),
@@ -66,6 +75,10 @@ param(
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+# -Debug and -Verbose would print the request's headers, the key among them: they are switched off for this script,
+# and the web call below is made with -Debug:$false -Verbose:$false as well.
+$DebugPreference = 'SilentlyContinue'
+$VerbosePreference = 'SilentlyContinue'
 . "$PSScriptRoot/lib/Common.ps1"
 $inv = [cultureinfo]::InvariantCulture
 
@@ -75,6 +88,10 @@ function Test-Word([string] $Text, [string] $Value) {
 
 $target = if ($PSCmdlet.ParameterSetName -eq 'Request') { $WriteRequest } else { $OutDir }
 if (Test-Path -LiteralPath $target) { Stop-Refused "refusing to write over an existing file or folder: $target" 2 }
+$apiRoot = $ApiBase.TrimEnd('/')
+if ($apiRoot -cne 'https://api.anthropic.com' -and $apiRoot -notmatch '^http://(127\.0\.0\.1|localhost):[0-9]{1,5}$') {
+    Stop-Refused 'ApiBase must be https://api.anthropic.com, or http://127.0.0.1:<port> for a local test server' 2
+}
 
 $summaryText = Get-Content -LiteralPath $SummaryJson -Raw -Encoding utf8
 $summary = $summaryText | ConvertFrom-Json
@@ -84,17 +101,14 @@ $request = New-BriefRequestText $SummaryJson $Prompt
 # local part and each part of three letters or more, except words that the request itself carries and number words.
 $rows = @(Import-Csv -LiteralPath $UsersCsv -Encoding utf8)
 $departments = @($rows | ForEach-Object { $_.Department } | Where-Object { $_ })
-$numberWords = 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'
 $sendWatch = New-Object System.Collections.Generic.List[string]
 $textWatch = New-Object System.Collections.Generic.List[string]
 foreach ($u in $rows) {
-    $name = ($u.DisplayName -replace '\(.*\)', '').Trim()
-    $local = ($u.UserPrincipalName -split '@')[0]
-    if ($u.UserPrincipalName) { $sendWatch.Add($u.UserPrincipalName) }
-    if ($name -and $name -notin $departments) { $sendWatch.Add($name) }
-    $parts = @("$name $local" -split '[^\p{L}]+' | Where-Object { $_.Length -ge 3 })
-    foreach ($v in @($u.UserPrincipalName, $name, $local) + $parts) {
-        if ($v -and $v -notin $numberWords -and -not (Test-Word $request $v)) { $textWatch.Add($v) }
+    $src = Get-NameSource $u
+    if ($src.Upn) { $sendWatch.Add($src.Upn) }
+    if ($src.Name -and $src.Name -notin $departments) { $sendWatch.Add($src.Name) }
+    foreach ($v in @($src.Upn, $src.Name, $src.Local) + @($src.Parts)) {
+        if ($v -and $v -notin $script:NumberWords -and -not (Test-Word $request $v)) { $textWatch.Add($v) }
     }
 }
 $leaks = @($sendWatch | Where-Object { Test-Word $request $_ })
@@ -113,10 +127,11 @@ function Invoke-AnthropicMessage([string] $Text) {
     $body = @{ model = $Model; max_tokens = 4096; messages = @(@{ role = 'user'; content = $Text }) } | ConvertTo-Json -Depth 5 -Compress
     $headers = @{ 'x-api-key' = $key; 'anthropic-version' = '2023-06-01' }
     try {
-        $resp = Invoke-RestMethod -Method Post -Uri ($ApiBase.TrimEnd('/') + '/v1/messages') -Headers $headers `
-            -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($body)) -TimeoutSec 60
+        # No redirect is followed: an answer 3xx is an error here, so the key and the summary go nowhere else.
+        $resp = Invoke-RestMethod -Method Post -Uri ($apiRoot + '/v1/messages') -Headers $headers -MaximumRedirection 0 `
+            -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($body)) -TimeoutSec 60 -Debug:$false -Verbose:$false
     } catch {
-        Stop-Refused "the API call failed: $($_.Exception.Message); nothing was written" 3
+        Stop-Refused "the API call failed: $($_.Exception.Message.Replace($key, '[key]')); nothing was written" 3
     }
     $stop = Get-Field $resp 'stop_reason'
     if ($stop -ne 'end_turn') { Stop-Refused "the API answer did not end normally (stop_reason: $stop); nothing was written" 3 }
@@ -128,6 +143,7 @@ function Invoke-AnthropicMessage([string] $Text) {
 # Where the text came from, and the label it has earned.
 $answerSha = ''
 $obtained = $null
+$meta = $null
 if ($Backend -eq 'Recorded') {
     $answer = Get-Content -LiteralPath $Recorded -Raw -Encoding utf8
     if ($null -eq $answer) { $answer = '' }
@@ -138,14 +154,24 @@ if ($Backend -eq 'Recorded') {
         $label = 'Unverified: no meta file beside the answer'
     } else {
         $meta = Read-JsonExact $metaPath
+        $metaModel = [string](Get-Field $meta 'model'); $metaOn = [string](Get-Field $meta 'recorded_on'); $metaHow = [string](Get-Field $meta 'obtained')
+        $metaDay = [datetime]::MinValue
         if ((Get-Field $meta 'request_sha256') -ne $sha) {
             $label = 'Unverified: the answer was given to another request (its meta file holds another request sha256)'
         } elseif ((Get-Field $meta 'answer_sha256') -ne $answerSha) {
             $label = 'Unverified: the answer file does not have the sha256 its meta file holds'
         } elseif ((Get-Field $meta 'origin') -eq 'recorded') {
-            $origin = 'recorded'
-            $label = 'Recorded: {0}, on {1}' -f (Get-Field $meta 'model'), (Get-Field $meta 'recorded_on')
-            $obtained = Get-Field $meta 'obtained'
+            if ($metaModel -cnotmatch '^[A-Za-z0-9][A-Za-z0-9._:-]{0,100}$') {
+                $label = 'Unverified: the meta file does not hold a plain model name'
+            } elseif (-not ($metaOn -match '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' -and [datetime]::TryParseExact($metaOn, 'yyyy-MM-dd', $inv, 'None', [ref]$metaDay))) {
+                $label = 'Unverified: the meta file''s date is not a date written yyyy-MM-dd'
+            } elseif ([string]::IsNullOrWhiteSpace($metaHow) -or -not (Test-PlainText $metaHow) -or $metaHow.Length -gt 1000) {
+                $label = 'Unverified: the meta file does not say, in plain text on one line, how the answer was obtained'
+            } else {
+                $origin = 'recorded'
+                $label = 'Recorded: {0}, on {1}' -f $metaModel, $metaOn
+                $obtained = $metaHow
+            }
         } elseif ((Get-Field $meta 'origin') -eq 'constructed') {
             $origin = 'constructed'
             $label = 'Constructed, not from a model'
@@ -159,10 +185,21 @@ if ($Backend -eq 'Recorded') {
     $label = "Model API call ($Model)"
 }
 
-# The numbers written in digits (0 to 9 only), after stand-ins, rule and decision ids, the product name and
-# ordered-list markers.
-function Get-Figures([string] $Text) {
-    $t = $Text -creplace '(user|policy)-[0-9]+', ' ' -creplace '\b[RD][0-9]+\b', ' ' -creplace 'Microsoft 365|M365', ' ' -replace '(?m)^[1-9][.)] (?=[^0-9])', ' '
+# A decision line: the id at the start of a line (after an optional list marker or bold), a separator, the question.
+$decisionLine = '^[ \t]*(?:[-*+][ \t]+)?(?:\*\*)?(?<id>D[0-9]+)(?:\*\*)?(?:[ \t]*[:.)\p{Pd}][ \t]*|[ \t]+)(?<rest>.*?)[ \t]*$'
+$closer = '(?i)[ \t]*\(?[ \t]*(?:yes or no|yes/no|yes / no)[ \t]*[?.]?[ \t]*\)?$'
+
+# The numbers written in digits (0 to 9). Removed first, and only these: stand-ins, rule ids, a decision id at the
+# start of its decision line (in the summary, every decision id), and the exact product names Microsoft 365 and M365.
+function Get-Figures([string] $Text, [switch] $Summary) {
+    $lines = foreach ($line in ($Text -split "`r?`n")) {
+        if ($Summary) { $line -creplace '\bD[0-9]+\b', ' ' }
+        else {
+            $m = [regex]::Match($line, $decisionLine)
+            if ($m.Success) { $g = $m.Groups['id']; $line.Substring(0, $g.Index) + ' ' + $line.Substring($g.Index + $g.Length) } else { $line }
+        }
+    }
+    $t = ($lines -join "`n") -replace '(?i)\b(user|policy)-[0-9]+\b', ' ' -creplace '\bR[0-9]+\b', ' ' -creplace '\bMicrosoft 365(?![0-9A-Za-z])', ' ' -creplace '\bM365\b', ' '
     $t = $t -replace '[0-9]{4}-[0-9]{2}-[0-9]{2}', { ($_.Value -split '-') -join ' ' }
     # Each figure as an exact decimal written canonically ("390.00" and "390" are one figure); a figure too long for a
     # decimal stays as written, and so is never one of the summary's own.
@@ -174,27 +211,43 @@ function Get-Figures([string] $Text) {
     @($out | Select-Object -Unique)
 }
 
-$allowed = Get-Figures $summaryText
-$refs = @($summary.rules | ForEach-Object { $_.items } | ForEach-Object { Get-Field $_ 'ref' })
+$allowed = Get-Figures $summaryText -Summary
+$refs = @($summary.rules | ForEach-Object { $_.items } | ForEach-Object { Get-Field $_ 'ref' }) +
+    @($summary.rules | ForEach-Object { $_.items } | ForEach-Object { Get-Field $_ 'report_only_policies_that_would_block_it' } | Where-Object { $_ })
 $ruleIds = @($summary.rules | ForEach-Object { $_.id })
 $decisions = @(Get-Field $summary 'decisions' | Where-Object { $_ })
 $decisionIds = @($decisions | ForEach-Object { $_.id })
+$questions = @{}; foreach ($d in $decisions) { $questions[$d.id] = $d.question }
 $problems = New-Object System.Collections.Generic.List[string]
 if ([string]::IsNullOrWhiteSpace($answer)) {
     $problems.Add('an empty text')
 } else {
     $extra = @(Get-Figures $answer | Where-Object { $_ -cnotin $allowed })
     if ($extra.Count -gt 0) { $problems.Add('figures not in the summary: ' + ($extra -join ', ')) }
-    if (@([regex]::Matches($answer, '(user|policy)-[0-9]+') | Where-Object { $_.Value -notin $refs }).Count) { $problems.Add('an unknown stand-in') }
-    if (@([regex]::Matches($answer, '\bR[0-9]+\b') | Where-Object { $_.Value -notin $ruleIds }).Count) { $problems.Add('an unknown rule id') }
+    if (@([regex]::Matches($answer, '(?i)\b(user|policy)-[0-9]+') | Where-Object { $_.Value -cnotin $refs }).Count) { $problems.Add('an unknown stand-in') }
+    if (@([regex]::Matches($answer, '\bR[0-9]+\b') | Where-Object { $_.Value -cnotin $ruleIds }).Count) { $problems.Add('an unknown rule id') }
+    # The decisions: each id once, on its own line, with the summary's question word for word.
     $said = @([regex]::Matches($answer, '\bD[0-9]+\b') | ForEach-Object { $_.Value })
+    $onLine = @{}
+    $wrongQuestion = New-Object System.Collections.Generic.List[string]
+    foreach ($line in ($answer -split "`r?`n")) {
+        $m = [regex]::Match($line, $decisionLine)
+        if (-not $m.Success) { continue }
+        $id = $m.Groups['id'].Value
+        $onLine[$id] = 1 + $(if ($onLine.ContainsKey($id)) { $onLine[$id] } else { 0 })
+        $rest = $m.Groups['rest'].Value -replace $closer, ''
+        if ($questions.ContainsKey($id) -and $rest -cne $questions[$id] -and $id -cnotin $wrongQuestion) { $wrongQuestion.Add($id) }
+    }
     $left = @($decisionIds | Where-Object { $_ -cnotin $said })
     if ($left.Count -gt 0) { $problems.Add('a decision left out: ' + ($left -join ', ')) }
     $twice = @($decisionIds | Where-Object { $d = $_; @($said | Where-Object { $_ -ceq $d }).Count -gt 1 })
     if ($twice.Count -gt 0) { $problems.Add('a decision named more than once: ' + ($twice -join ', ')) }
     if (@($said | Where-Object { $_ -cnotin $decisionIds }).Count) { $problems.Add('an unknown decision id') }
+    $outside = @($said | Select-Object -Unique | Where-Object { $d = $_; @($said | Where-Object { $_ -ceq $d }).Count -gt $(if ($onLine.ContainsKey($d)) { $onLine[$d] } else { 0 }) })
+    if ($outside.Count -gt 0) { $problems.Add('a decision id outside its own line: ' + ($outside -join ', ')) }
+    if ($wrongQuestion.Count -gt 0) { $problems.Add('a decision whose question is not the summary''s: ' + ($wrongQuestion -join ', ')) }
     if ($answer -match '[0-9][ \xA0]+[0-9]') { $problems.Add('digit groups separated by a space') }
-    if ($answer -match '[\p{Nd}-[0-9]]') { $problems.Add('a digit other than 0 to 9') }
+    if ($answer -match '[\p{N}-[0-9]]') { $problems.Add('a digit other than 0 to 9') }
     $named = @($textWatch | Where-Object { Test-Word $answer $_ })
     if ($named.Count -gt 0) { $problems.Add("$($named.Count) personal value(s) in the text") }
     if ($answer.Contains('@')) { $problems.Add('an at sign (@) in the text') }
@@ -208,10 +261,12 @@ if ($accepted) {
     $isCost = { param($r) $k = Get-Field $r 'kind'; if ($k) { $k -eq 'cost' } else { $r.id -in 'R1', 'R2', 'R5' } }
     $ordered = @($summary.rules | Where-Object { -not (& $isCost $_) }) + @($summary.rules | Where-Object { & $isCost $_ })
     $findings = foreach ($r in $ordered) {
+        $missing = Get-Field $r 'not_checked'
+        if ($missing) { '- {0} {1}: not checked ({2})' -f $r.id, $r.title, $missing; continue }
         $note = switch (Get-Field $r 'scope') { 'tenant' { ' (a tenant setting; no person is named)' } 'policy' { ' (policies; no person is named)' } default { '' } }
         '- {0} {1}: {2}{3}' -f $r.id, $r.title, $r.count, $note
     }
-    $asks = if ($decisions.Count) { foreach ($d in $decisions) { '- {0} {1} Yes / No' -f $d.id, $d.question } } else { '- None: no rule found anything.' }
+    $asks = if ($decisions.Count) { foreach ($d in $decisions) { '{0} {1} Yes or no?' -f $d.id, $d.question } } else { '- None: no rule found anything.' }
     $brief = (Get-Content -LiteralPath $FallbackTemplate -Raw -Encoding utf8) -replace "`r`n", "`n"
     $values = [ordered]@{
         '{as_of}' = $summary.as_of; '{users_checked}' = $summary.users_checked
@@ -225,7 +280,7 @@ New-Item -ItemType Directory -Path $OutDir | Out-Null
 Write-TextFile (Join-Path $OutDir 'brief.md') $brief
 [IO.File]::WriteAllBytes((Resolve-FullPath (Join-Path $OutDir 'findings-summary.json')), [IO.File]::ReadAllBytes((Resolve-FullPath $SummaryJson)))
 $report = [ordered]@{
-    backend = $Backend; model = $(if ($origin -eq 'recorded') { Get-Field $meta 'model' } elseif ($origin -eq 'live') { $Model } else { $null })
+    backend = $Backend; model = $(if ($origin -eq 'recorded') { $metaModel } elseif ($origin -eq 'live') { $Model } else { $null })
     answer_file = $(if ($Backend -eq 'Recorded') { Split-Path $Recorded -Leaf } else { $null })
     origin = $origin; origin_label = $label; obtained = $obtained; answer_sha256 = $answerSha
     request_sha256 = $sha; personal_values_in_request = $leaks.Count

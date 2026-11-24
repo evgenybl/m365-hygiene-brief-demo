@@ -13,11 +13,12 @@
          byte for byte to <Into>/<Name>.md and writes <Into>/<Name>.meta.json with origin "recorded", the model's
          name, how the answer was obtained, the date, the request's sha256 and the answer's sha256.
 
-    New-ManagerBrief.ps1 labels a saved answer "Recorded" only when both hashes in its meta file still match.
+    New-ManagerBrief.ps1 labels a saved answer "Recorded" only when both hashes in its meta file still match and its
+    model name, date and account of how it was obtained are well formed; this script refuses them otherwise.
     It never overwrites a recording, and it changes nothing else.
 
 .EXAMPLE
-    pwsh -File Add-RecordedBrief.ps1 -Answer answer.md -RequestFile request.txt -SummaryJson examples/findings/findings-summary.json -Model <model name> -Obtained "<how it was obtained>" -RecordedOn 2026-11-24 -Name brief.recorded
+    pwsh -File Add-RecordedBrief.ps1 -Answer answer.md -RequestFile request.txt -SummaryJson examples/findings/findings-summary.json -Model <model name> -Obtained "<how it was obtained>" -RecordedOn <yyyy-MM-dd> -Name brief.recorded
 #>
 [CmdletBinding()]
 param(
@@ -40,7 +41,10 @@ $d = [datetime]::MinValue
 if (-not ($RecordedOn -match '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' -and [datetime]::TryParseExact($RecordedOn, 'yyyy-MM-dd', $inv, 'None', [ref]$d))) {
     Stop-Refused 'RecordedOn must be a date written yyyy-MM-dd'
 }
-foreach ($v in @($Model, $Obtained)) { if ([string]::IsNullOrWhiteSpace($v) -or $v -match '[\x00-\x1F]') { Stop-Refused 'Model and Obtained must be plain text on one line' } }
+if ($Model -cnotmatch '^[A-Za-z0-9][A-Za-z0-9._:-]{0,100}$') { Stop-Refused 'Model must be a plain model name: letters, digits, dot, underscore, colon and hyphen' }
+if ([string]::IsNullOrWhiteSpace($Obtained) -or -not (Test-PlainText $Obtained) -or $Obtained.Length -gt 1000) {
+    Stop-Refused 'Obtained must be plain text on one line, at most 1000 characters'
+}
 $answerPath = Join-Path $Into ($Name + '.md')
 $metaPath = Join-Path $Into ($Name + '.meta.json')
 foreach ($p in @($answerPath, $metaPath)) { if (Test-Path -LiteralPath $p) { Stop-Refused "refusing to overwrite $(Split-Path $p -Leaf)" } }

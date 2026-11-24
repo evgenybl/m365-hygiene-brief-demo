@@ -11,7 +11,7 @@ only from the questions the manager answered Yes.**
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 Everything here runs on an invented organisation. Nothing was ever run against a real Microsoft 365 tenant (the
-organisation's own space in Microsoft 365: its accounts, licences and sign-in rules).
+organisation's own space in Microsoft 365: its accounts, its licences, which are the paid seats, and its sign-in rules).
 
 ## What you see
 
@@ -36,8 +36,8 @@ it (see *Recording a real model answer*, below). The whole story ends in this ta
 
 ## Try it in two minutes
 
-PowerShell 7.4 or later; nothing to install. Run here with PowerShell 7.7.0 on Windows; the CI workflow runs on Linux and
-Windows and prints the version each runner uses. Each command writes into a new folder and refuses to write over one that
+PowerShell 7.4 or later; nothing to install. The tests were run here with PowerShell 7.7.0 and 7.4.6 on Windows; the CI
+workflow runs on Linux and Windows and prints the version each runner uses. Each command writes into a new folder and refuses to write over one that
 exists.
 
 The whole story, on the invented tenant in `data/`:

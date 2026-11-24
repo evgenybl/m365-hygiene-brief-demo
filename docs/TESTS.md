@@ -83,9 +83,21 @@ the examples again under another time zone and culture (`TZ`, `LANG`), which Lin
 
 ## The last lines of a run
 
-Pasted from a run of `pwsh -NoProfile -File Test-Demo.ps1` with PowerShell 7.7.0 on Windows, on 24 November 2026.
-A test checks that the result line below is the result line of the run that reads it.
+Pasted from a run of `pwsh -NoProfile -File Test-Demo.ps1` with PowerShell 7.7.0 on Windows, in a fresh clone, on
+24 November 2026. A test checks that the result line below is the result line of the run that reads it.
+
+```text
+PASS no file holds a key-shaped or token-shaped literal
+PASS no line reads like an assigned credential (token, secret, password or key = a literal)
+PASS docs/TESTS.md shows the result line of this run, pasted from a run
+RESULT 193 passed, 0 failed
+```
+
+The result line of the same tests with PowerShell 7.4.6 on Windows (a portable copy first on the path, so that every
+child step ran on it too), in another fresh clone the same day:
 
 ```text
 RESULT 193 passed, 0 failed
 ```
+
+The version CI uses on Linux and on Windows is printed by the workflow's first step.

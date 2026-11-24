@@ -870,7 +870,9 @@ Check 'no line reads like an assigned credential (token, secret, password or key
 
 $tests = Get-Text (Join-Path $here 'docs/TESTS.md')
 $expectedLine = 'RESULT {0} passed, {1} failed' -f ($script:pass + 1), $script:fail
-Check 'docs/TESTS.md shows the result line of this run, pasted from a run' (@($tests -split "`n" | Where-Object { $_.TrimEnd() -ceq $expectedLine }).Count -eq 1)
+$pasted = @($tests -split "`n" | Where-Object { $_ -like 'RESULT *' } | ForEach-Object { $_.TrimEnd() })
+Check 'docs/TESTS.md shows the result line of this run, pasted from a run (every result line it shows is this run''s)' ($pasted.Count -ge 1 -and
+    @($pasted | Where-Object { $_ -cne $expectedLine }).Count -eq 0)
 
 Write-Output ("RESULT {0} passed, {1} failed" -f $script:pass, $script:fail)
 if ($script:fail -gt 0) {

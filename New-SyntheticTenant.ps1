@@ -1,7 +1,8 @@
 #requires -Version 7.4
 <#
 .SYNOPSIS
-    Writes an invented Microsoft 365 tenant: a users table, a licence table and a Conditional Access policy table.
+    Writes an invented Microsoft 365 tenant: a users table, a licence table, a Conditional Access policy table and a
+    tenant table (security defaults off).
 
 .DESCRIPTION
     Every account is invented, at demo.example.com, and every display name is marked "(synthetic)". The licence names
@@ -14,11 +15,13 @@
     The tenant is built so that every rule of Get-TenantHygieneFindings.ps1 fires at least once and each boundary case
     is present: a sign-in exactly 90 days before the as-of date and one 91 days before (also as timestamps near
     midnight UTC and with an offset), members and guests created 30 and 31 days before who never signed in, an account
-    6 days old, five accounts holding Global Administrator, an administrator without MFA who is disabled, and policies
-    in report-only mode created 30 and 31 days before. The other accounts are drawn by the generator.
+    6 days old, five accounts holding Global Administrator, an administrator without MFA who is disabled (not judged by
+    R3, counted by R6 and R2), policies in report-only mode created 30 and 31 days before, a report-only policy that
+    would block legacy authentication, and two enabled policies that block legacy authentication only in part (one
+    under a risk condition, one with an application excluded). The other accounts are drawn by the generator.
 
-    It writes four files into a new folder: users.synthetic.csv, skus.synthetic.csv, policies.synthetic.csv, and
-    tenant-source.txt, which names the command that wrote them.
+    It writes five files into a new folder: users.synthetic.csv, skus.synthetic.csv, policies.synthetic.csv,
+    tenant.synthetic.csv, and tenant-source.txt, which names the command that wrote them.
 
 .EXAMPLE
     pwsh -File New-SyntheticTenant.ps1 -Seed 2026 -AsOf 2026-11-21 -OutDir <new folder>
@@ -133,32 +136,41 @@ while ($all.Count -lt $Accounts) {
 for ($i = $all.Count - 1; $i -gt 0; $i--) { $j = Get-Pick ($i + 1); $t = $all[$i]; $all[$i] = $all[$j]; $all[$j] = $t }
 
 $pid0 = '00000000-0000-4000-8000-0000000000'
+function New-Policy([string] $Id, [string] $Name, [string] $State, [string] $Created, [string] $Apps, [string] $Users, [string] $Grant,
+    [string] $Other = '', [string] $ExcludeApps = '') {
+    [ordered]@{ PolicyId = "${pid0}$Id"; DisplayName = $Name; State = $State; CreatedDate = $Created; ClientAppTypes = $Apps; IncludeUsers = $Users
+        IncludeApplications = 'All'; ExcludeApplications = $ExcludeApps; ApplicationFilter = ''; GrantControls = $Grant; OtherConditions = $Other }
+}
 $policies = @(
-    [ordered]@{ PolicyId = "${pid0}01"; DisplayName = 'Require MFA for administrators (synthetic)'; State = 'enabled'
-        CreatedDate = (Get-Stamp 420 '09:00:00Z'); ClientAppTypes = 'all'; IncludeUsers = ''; IncludeApplications = 'All'; GrantControls = 'mfa'; OtherConditions = '' }
-    [ordered]@{ PolicyId = "${pid0}02"; DisplayName = 'Block legacy authentication (synthetic)'; State = 'enabledForReportingButNotEnforced'
-        CreatedDate = (Get-Stamp 45 '10:15:00Z'); ClientAppTypes = 'exchangeActiveSync;other'; IncludeUsers = 'All'; IncludeApplications = 'All'; GrantControls = 'block'; OtherConditions = '' }
-    [ordered]@{ PolicyId = "${pid0}03"; DisplayName = 'Require a compliant device for Finance (synthetic)'; State = 'enabledForReportingButNotEnforced'
-        CreatedDate = (Get-Stamp 30 '23:00:00Z'); ClientAppTypes = 'all'; IncludeUsers = ''; IncludeApplications = 'All'; GrantControls = 'compliantDevice'; OtherConditions = '' }
-    [ordered]@{ PolicyId = "${pid0}04"; DisplayName = 'Terms of use for guests (synthetic)'; State = 'enabledForReportingButNotEnforced'
-        CreatedDate = (Get-Stamp 31 '07:00:00Z'); ClientAppTypes = 'all'; IncludeUsers = 'GuestsOrExternalUsers'; IncludeApplications = 'All'; GrantControls = 'mfa'; OtherConditions = '' }
-    [ordered]@{ PolicyId = "${pid0}05"; DisplayName = 'Old pilot: block legacy authentication for IT (synthetic)'; State = 'disabled'
-        CreatedDate = (Get-Stamp 700 '12:00:00Z'); ClientAppTypes = 'exchangeActiveSync;other'; IncludeUsers = ''; IncludeApplications = 'All'; GrantControls = 'block'; OtherConditions = '' }
-    [ordered]@{ PolicyId = "${pid0}06"; DisplayName = 'Block sign-in for high-risk users (synthetic)'; State = 'enabled'
-        CreatedDate = (Get-Stamp 300 '08:30:00Z'); ClientAppTypes = 'exchangeActiveSync;other'; IncludeUsers = 'All'; IncludeApplications = 'All'; GrantControls = 'block'; OtherConditions = 'userRiskLevels' }
+    New-Policy '01' 'Require MFA for administrators (synthetic)' 'enabled' (Get-Stamp 420 '09:00:00Z') 'all' '' 'mfa'
+    # Would block legacy authentication, but is in report-only mode: R7 names it, and R8 too (45 days old).
+    New-Policy '02' 'Block legacy authentication (synthetic)' 'enabledForReportingButNotEnforced' (Get-Stamp 45 '10:15:00Z') 'exchangeActiveSync;other' 'All' 'block'
+    # R8 boundary: report-only, created 30 days before (not flagged) and 31 days before (flagged).
+    New-Policy '03' 'Require a compliant device for Finance (synthetic)' 'enabledForReportingButNotEnforced' (Get-Stamp 30 '23:00:00Z') 'all' '' 'compliantDevice'
+    New-Policy '04' 'Terms of use for guests (synthetic)' 'enabledForReportingButNotEnforced' (Get-Stamp 31 '07:00:00Z') 'all' 'GuestsOrExternalUsers' 'mfa'
+    New-Policy '05' 'Old pilot: block legacy authentication for IT (synthetic)' 'disabled' (Get-Stamp 700 '12:00:00Z') 'exchangeActiveSync;other' '' 'block'
+    # Enabled, for all users, but blocks only when a risk condition holds, so it does not block legacy authentication.
+    New-Policy '06' 'Block sign-in for high-risk users (synthetic)' 'enabled' (Get-Stamp 300 '08:30:00Z') 'exchangeActiveSync;other' 'All' 'block' 'userRiskLevels'
+    # Enabled and blocks legacy authentication, but excludes one application, so it does not cover all resources.
+    New-Policy '07' 'Block legacy authentication, scanner app excluded (synthetic)' 'enabled' (Get-Stamp 200 '11:00:00Z') 'exchangeActiveSync;other' 'All' 'block' '' '00000000-0000-4000-8000-0000000000e1'
 )
+# Security defaults are off: a tenant that uses Conditional Access policies has them off.
+$tenant = @([ordered]@{ SecurityDefaultsEnabled = 'False' })
 
 $userColumns = @('UserPrincipalName', 'DisplayName', 'Department', 'UserType', 'AccountEnabled', 'IsAdmin', 'MfaRegistered', 'CreatedDate',
     'LastSignInDate', 'AssignedLicenses', 'AdminRoles')
-$policyColumns = @('PolicyId', 'DisplayName', 'State', 'CreatedDate', 'ClientAppTypes', 'IncludeUsers', 'IncludeApplications', 'GrantControls', 'OtherConditions')
+$policyColumns = @('PolicyId', 'DisplayName', 'State', 'CreatedDate', 'ClientAppTypes', 'IncludeUsers', 'IncludeApplications', 'ExcludeApplications',
+    'ApplicationFilter', 'GrantControls', 'OtherConditions')
 $usersText = ConvertTo-CsvText $all.ToArray() $userColumns
 $skusText = ConvertTo-CsvText $skus @('SkuPartNumber', 'MonthlyCostSynthetic')
 $policiesText = ConvertTo-CsvText $policies $policyColumns
+$tenantText = ConvertTo-CsvText $tenant @('SecurityDefaultsEnabled')
 $source = 'Written by New-SyntheticTenant.ps1 -Seed {0} -AsOf {1} -Accounts {2}' -f $Seed, $AsOf, $Accounts
 
 New-Item -ItemType Directory -Path $OutDir | Out-Null
 Write-TextFile (Join-Path $OutDir 'users.synthetic.csv') $usersText
 Write-TextFile (Join-Path $OutDir 'skus.synthetic.csv') $skusText
 Write-TextFile (Join-Path $OutDir 'policies.synthetic.csv') $policiesText
+Write-TextFile (Join-Path $OutDir 'tenant.synthetic.csv') $tenantText
 Write-LineFile (Join-Path $OutDir 'tenant-source.txt') @($source)
-Write-Output ('accounts {0} | licences {1} | policies {2} | seed {3} | as of {4}' -f $all.Count, $skus.Count, $policies.Count, $Seed, $AsOf)
+Write-Output ('accounts {0} | licences {1} | policies {2} | security defaults off | seed {3} | as of {4}' -f $all.Count, $skus.Count, $policies.Count, $Seed, $AsOf)

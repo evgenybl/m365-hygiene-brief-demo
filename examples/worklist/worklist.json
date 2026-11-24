@@ -1,0 +1,144 @@
+{
+  "summary_sha256": "330d8e1ceb7d0547aefa6b2d6fdb0e88151241a6623c22575af8f493508af561",
+  "decisions_sha256": "8fbcfd2355bacef29534d60422a60886599714292535a6daa699032f28e8b44c",
+  "yes": [
+    "D1",
+    "D2",
+    "D3",
+    "D5"
+  ],
+  "no": [
+    {
+      "decision": "D4",
+      "by": "Rina Manager (synthetic)",
+      "at": "2026-11-22T09:03:00Z",
+      "reason": "The policies stay in report-only mode until the help desk has read what they would block."
+    }
+  ],
+  "open": [
+    "D6"
+  ],
+  "items": [
+    {
+      "Decision": "D1",
+      "Rule": "R3",
+      "Scope": "account",
+      "Item": "bina.bet@demo.example.com",
+      "Name": "Bina Bet (synthetic)",
+      "Detail": "",
+      "WhatToReview": "Register a second sign-in step (MFA) for this administrator, or remove the role.",
+      "DecidedBy": "Rina Manager (synthetic)",
+      "DecidedAt": "2026-11-22T09:00:00Z"
+    },
+    {
+      "Decision": "D1",
+      "Rule": "R3",
+      "Scope": "account",
+      "Item": "roni.lamed@demo.example.com",
+      "Name": "Roni Lamed (synthetic)",
+      "Detail": "",
+      "WhatToReview": "Register a second sign-in step (MFA) for this administrator, or remove the role.",
+      "DecidedBy": "Rina Manager (synthetic)",
+      "DecidedAt": "2026-11-22T09:00:00Z"
+    },
+    {
+      "Decision": "D1",
+      "Rule": "R3",
+      "Scope": "account",
+      "Item": "rotem.samekh@demo.example.com",
+      "Name": "Rotem Samekh (synthetic)",
+      "Detail": "",
+      "WhatToReview": "Register a second sign-in step (MFA) for this administrator, or remove the role.",
+      "DecidedBy": "Rina Manager (synthetic)",
+      "DecidedAt": "2026-11-22T09:00:00Z"
+    },
+    {
+      "Decision": "D2",
+      "Rule": "R6",
+      "Scope": "tenant",
+      "Item": "bina.bet@demo.example.com",
+      "Name": "Bina Bet (synthetic)",
+      "Detail": "Holds Global Administrator (enabled); 5 accounts hold it, limit 4",
+      "WhatToReview": "Does this account need the Global Administrator role? Bring the holders down to the limit.",
+      "DecidedBy": "Rina Manager (synthetic)",
+      "DecidedAt": "2026-11-22T09:01:00Z"
+    },
+    {
+      "Decision": "D2",
+      "Rule": "R6",
+      "Scope": "tenant",
+      "Item": "rotem.samekh@demo.example.com",
+      "Name": "Rotem Samekh (synthetic)",
+      "Detail": "Holds Global Administrator (disabled); 5 accounts hold it, limit 4",
+      "WhatToReview": "Does this account need the Global Administrator role? Bring the holders down to the limit.",
+      "DecidedBy": "Rina Manager (synthetic)",
+      "DecidedAt": "2026-11-22T09:01:00Z"
+    },
+    {
+      "Decision": "D2",
+      "Rule": "R6",
+      "Scope": "tenant",
+      "Item": "adi.vav@demo.example.com",
+      "Name": "Adi Vav (synthetic)",
+      "Detail": "Holds Global Administrator (enabled); 5 accounts hold it, limit 4",
+      "WhatToReview": "Does this account need the Global Administrator role? Bring the holders down to the limit.",
+      "DecidedBy": "Rina Manager (synthetic)",
+      "DecidedAt": "2026-11-22T09:01:00Z"
+    },
+    {
+      "Decision": "D2",
+      "Rule": "R6",
+      "Scope": "tenant",
+      "Item": "ofir.resh@demo.example.com",
+      "Name": "Ofir Resh (synthetic)",
+      "Detail": "Holds Global Administrator (enabled); 5 accounts hold it, limit 4",
+      "WhatToReview": "Does this account need the Global Administrator role? Bring the holders down to the limit.",
+      "DecidedBy": "Rina Manager (synthetic)",
+      "DecidedAt": "2026-11-22T09:01:00Z"
+    },
+    {
+      "Decision": "D2",
+      "Rule": "R6",
+      "Scope": "tenant",
+      "Item": "roni.qof@demo.example.com",
+      "Name": "Roni Qof (synthetic)",
+      "Detail": "Holds Global Administrator (enabled); 5 accounts hold it, limit 4",
+      "WhatToReview": "Does this account need the Global Administrator role? Bring the holders down to the limit.",
+      "DecidedBy": "Rina Manager (synthetic)",
+      "DecidedAt": "2026-11-22T09:01:00Z"
+    },
+    {
+      "Decision": "D3",
+      "Rule": "R7",
+      "Scope": "tenant",
+      "Item": "(the tenant)",
+      "Name": "",
+      "Detail": "No enabled policy blocks legacy authentication; 6 policies checked",
+      "WhatToReview": "Enforce a Conditional Access policy that blocks legacy authentication (start it in report-only mode, then switch it on).",
+      "DecidedBy": "Rina Manager (synthetic)",
+      "DecidedAt": "2026-11-22T09:02:00Z"
+    },
+    {
+      "Decision": "D5",
+      "Rule": "R4",
+      "Scope": "account",
+      "Item": "tamar.tav_partner.example.com#EXT#@demo.example.com",
+      "Name": "Tamar Tav (synthetic guest)",
+      "Detail": "",
+      "WhatToReview": "Does the guest still need access? If not, remove the guest.",
+      "DecidedBy": "Rina Manager (synthetic)",
+      "DecidedAt": "2026-11-22T09:04:00Z"
+    },
+    {
+      "Decision": "D5",
+      "Rule": "R4",
+      "Scope": "account",
+      "Item": "keren.bet_partner.example.com#EXT#@demo.example.com",
+      "Name": "Keren Bet (synthetic guest)",
+      "Detail": "",
+      "WhatToReview": "Does the guest still need access? If not, remove the guest.",
+      "DecidedBy": "Rina Manager (synthetic)",
+      "DecidedAt": "2026-11-22T09:04:00Z"
+    }
+  ]
+}

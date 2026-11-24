@@ -1,0 +1,18 @@
+{
+  "user-001": "tamar.tav_partner.example.com#EXT#@demo.example.com",
+  "user-002": "dor.zayin@demo.example.com",
+  "user-003": "sivan.bet@demo.example.com",
+  "user-004": "keren.bet_partner.example.com#EXT#@demo.example.com",
+  "user-005": "bina.bet@demo.example.com",
+  "user-006": "noam.gimel@demo.example.com",
+  "user-007": "tamar.dalet@demo.example.com",
+  "user-008": "roni.lamed@demo.example.com",
+  "user-009": "sivan.pe@demo.example.com",
+  "user-010": "rotem.samekh@demo.example.com",
+  "user-011": "amir.zayin@demo.example.com",
+  "user-012": "omri.he@demo.example.com",
+  "user-013": "lia.shin@demo.example.com",
+  "user-014": "tamar.vav@demo.example.com",
+  "policy-001": "00000000-0000-4000-8000-000000000002",
+  "policy-002": "00000000-0000-4000-8000-000000000004"
+}

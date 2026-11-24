@@ -1,0 +1,291 @@
+{
+  "as_of": "2026-11-21",
+  "users_checked": 60,
+  "policies_checked": 6,
+  "thresholds": {
+    "stale_days": 90,
+    "new_account_grace_days": 30,
+    "global_admin_limit": 4,
+    "report_only_days": 30
+  },
+  "cost_note": "synthetic units, invented for the demo; not a vendor price and not money",
+  "reclaimable_monthly_cost_synthetic": "169.4",
+  "rules": [
+    {
+      "id": "R1",
+      "title": "Enabled and licensed, no sign-in for more than 90 days",
+      "kind": "cost",
+      "scope": "account",
+      "count": 7,
+      "monthly_cost_synthetic": "129.2",
+      "items": [
+        {
+          "ref": "user-003",
+          "department": "Operations",
+          "days_since_sign_in": 139,
+          "licenses": [
+            "SYN_SUITE_PLUS"
+          ],
+          "monthly_cost_synthetic": "21.4"
+        },
+        {
+          "ref": "user-006",
+          "department": "Support",
+          "days_since_sign_in": 105,
+          "licenses": [
+            "SYN_SUITE_PLUS"
+          ],
+          "monthly_cost_synthetic": "21.4"
+        },
+        {
+          "ref": "user-007",
+          "department": "Support",
+          "days_since_sign_in": 91,
+          "licenses": [
+            "SYN_SUITE_BASIC"
+          ],
+          "monthly_cost_synthetic": "6.1"
+        },
+        {
+          "ref": "user-009",
+          "department": "Marketing",
+          "days_since_sign_in": 91,
+          "licenses": [
+            "SYN_SUITE_PLUS",
+            "SYN_DIAGRAMS_ADDON"
+          ],
+          "monthly_cost_synthetic": "30.75"
+        },
+        {
+          "ref": "user-011",
+          "department": "Management",
+          "days_since_sign_in": 333,
+          "licenses": [
+            "SYN_SUITE_PLUS",
+            "SYN_DIAGRAMS_ADDON"
+          ],
+          "monthly_cost_synthetic": "30.75"
+        },
+        {
+          "ref": "user-013",
+          "department": "Management",
+          "days_since_sign_in": 333,
+          "licenses": [
+            "SYN_SUITE_BASIC"
+          ],
+          "monthly_cost_synthetic": "6.1"
+        },
+        {
+          "ref": "user-014",
+          "department": "Sales",
+          "days_since_sign_in": 91,
+          "licenses": [
+            "SYN_SUITE_STANDARD"
+          ],
+          "monthly_cost_synthetic": "12.7"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "title": "Disabled but still licensed",
+      "kind": "cost",
+      "scope": "account",
+      "count": 2,
+      "monthly_cost_synthetic": "34.1",
+      "items": [
+        {
+          "ref": "user-010",
+          "department": "Operations",
+          "days_since_sign_in": 200,
+          "licenses": [
+            "SYN_SUITE_PLUS"
+          ],
+          "monthly_cost_synthetic": "21.4"
+        },
+        {
+          "ref": "user-012",
+          "department": "Legal",
+          "days_since_sign_in": 150,
+          "licenses": [
+            "SYN_SUITE_STANDARD"
+          ],
+          "monthly_cost_synthetic": "12.7"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "title": "Administrator without MFA registered",
+      "kind": "security",
+      "scope": "account",
+      "count": 3,
+      "monthly_cost_synthetic": "0",
+      "items": [
+        {
+          "ref": "user-005",
+          "department": "IT",
+          "days_since_sign_in": 2,
+          "licenses": [
+            "SYN_SUITE_PLUS"
+          ],
+          "monthly_cost_synthetic": "0"
+        },
+        {
+          "ref": "user-008",
+          "department": "Support",
+          "days_since_sign_in": 3,
+          "licenses": [
+            "SYN_SUITE_STANDARD"
+          ],
+          "monthly_cost_synthetic": "0"
+        },
+        {
+          "ref": "user-010",
+          "department": "Operations",
+          "days_since_sign_in": 200,
+          "licenses": [
+            "SYN_SUITE_PLUS"
+          ],
+          "monthly_cost_synthetic": "0"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "title": "Guest with no sign-in for more than 90 days, or never",
+      "kind": "security",
+      "scope": "account",
+      "count": 2,
+      "monthly_cost_synthetic": "0",
+      "items": [
+        {
+          "ref": "user-001",
+          "department": "(guest)",
+          "days_since_sign_in": null,
+          "licenses": [],
+          "monthly_cost_synthetic": "0"
+        },
+        {
+          "ref": "user-004",
+          "department": "(guest)",
+          "days_since_sign_in": 120,
+          "licenses": [],
+          "monthly_cost_synthetic": "0"
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "title": "Licensed member who never signed in, created more than 30 days ago",
+      "kind": "cost",
+      "scope": "account",
+      "count": 1,
+      "monthly_cost_synthetic": "6.1",
+      "items": [
+        {
+          "ref": "user-002",
+          "department": "Finance",
+          "days_since_sign_in": null,
+          "licenses": [
+            "SYN_SUITE_BASIC"
+          ],
+          "monthly_cost_synthetic": "6.1"
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "title": "More than 4 accounts hold the Global Administrator role",
+      "kind": "security",
+      "scope": "tenant",
+      "count": 1,
+      "monthly_cost_synthetic": "0",
+      "items": [
+        {
+          "ref": "tenant",
+          "global_administrators": 5,
+          "limit": 4
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "title": "No enabled Conditional Access policy blocks legacy authentication",
+      "kind": "security",
+      "scope": "tenant",
+      "count": 1,
+      "monthly_cost_synthetic": "0",
+      "items": [
+        {
+          "ref": "tenant",
+          "policies_checked": 6
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "title": "Conditional Access policy in report-only mode, created more than 30 days ago",
+      "kind": "security",
+      "scope": "policy",
+      "count": 2,
+      "monthly_cost_synthetic": "0",
+      "items": [
+        {
+          "ref": "policy-001",
+          "days_since_created": 45
+        },
+        {
+          "ref": "policy-002",
+          "days_since_created": 31
+        }
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "question": "Should the administrator require every administrator account to register a second sign-in step (MFA)?",
+      "rules": [
+        "R3"
+      ]
+    },
+    {
+      "id": "D2",
+      "question": "Should the administrator review who holds the Global Administrator role and bring it down to 4 accounts or fewer?",
+      "rules": [
+        "R6"
+      ]
+    },
+    {
+      "id": "D3",
+      "question": "Should the administrator turn on a Conditional Access policy that blocks legacy authentication for all users?",
+      "rules": [
+        "R7"
+      ]
+    },
+    {
+      "id": "D4",
+      "question": "Should the administrator review each Conditional Access policy left in report-only mode, to switch it on or remove it?",
+      "rules": [
+        "R8"
+      ]
+    },
+    {
+      "id": "D5",
+      "question": "Should the administrator remove the guest accounts that have not signed in?",
+      "rules": [
+        "R4"
+      ]
+    },
+    {
+      "id": "D6",
+      "question": "Should the administrator review the unused licences and return the ones the review finds not needed?",
+      "rules": [
+        "R1",
+        "R2",
+        "R5"
+      ]
+    }
+  ]
+}

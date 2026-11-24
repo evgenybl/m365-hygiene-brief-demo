@@ -1,0 +1,40 @@
+{
+  "summary_sha256": "330d8e1ceb7d0547aefa6b2d6fdb0e88151241a6623c22575af8f493508af561",
+  "answers": [
+    {
+      "decision": "D1",
+      "answer": "Yes",
+      "by": "Rina Manager (synthetic)",
+      "at": "2026-11-22T09:00:00Z",
+      "reason": ""
+    },
+    {
+      "decision": "D2",
+      "answer": "Yes",
+      "by": "Rina Manager (synthetic)",
+      "at": "2026-11-22T09:01:00Z",
+      "reason": ""
+    },
+    {
+      "decision": "D3",
+      "answer": "Yes",
+      "by": "Rina Manager (synthetic)",
+      "at": "2026-11-22T09:02:00Z",
+      "reason": ""
+    },
+    {
+      "decision": "D4",
+      "answer": "No",
+      "by": "Rina Manager (synthetic)",
+      "at": "2026-11-22T09:03:00Z",
+      "reason": "The policies stay in report-only mode until the help desk has read what they would block."
+    },
+    {
+      "decision": "D5",
+      "answer": "Yes",
+      "by": "Rina Manager (synthetic)",
+      "at": "2026-11-22T09:04:00Z",
+      "reason": ""
+    }
+  ]
+}

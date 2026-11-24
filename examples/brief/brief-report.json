@@ -1,0 +1,24 @@
+{
+  "backend": "Recorded",
+  "model": null,
+  "answer_file": "brief.constructed.md",
+  "origin": "constructed",
+  "origin_label": "Constructed, not from a model",
+  "answer_sha256": "98b12fe5cad1d1231932693b25a5008a6b095c0f7ac7cff2e1fe21ac1afaf008",
+  "request_sha256": "4a66f63a742bf321c950aa8618353c595d3a158e464fc9609cb21e8db5391cee",
+  "personal_values_in_request": 0,
+  "ai_text_accepted": true,
+  "problems": [],
+  "brief_source": "the checked text",
+  "brief_sha256": "98b12fe5cad1d1231932693b25a5008a6b095c0f7ac7cff2e1fe21ac1afaf008",
+  "summary_sha256": "330d8e1ceb7d0547aefa6b2d6fdb0e88151241a6623c22575af8f493508af561",
+  "decisions": [
+    "D1",
+    "D2",
+    "D3",
+    "D4",
+    "D5",
+    "D6"
+  ],
+  "summary_sent_to_api": false
+}

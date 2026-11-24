@@ -1,9 +1,9 @@
 Microsoft 365 hygiene demo: synthetic data, as of 2026-11-21
 findings    OK       users 60 | policies 7 | security defaults off | R1 7 | R2 2 | R3 2 | R4 2 | R5 1 | R6 1 | R7 1 | R8 2 | reclaimable (invented units) 169.4 | people flagged 14 | decisions D1 D2 D3 D4 D5 D6
-brief       OK       backend Recorded | text accepted True | problems 0 | summary sent to the API False | Constructed, not from a model
+brief       OK       backend Recorded | text accepted True | problems 0 | summary sent to the API False | Recorded: claude-haiku-5-5, on 2026-11-24
 decisions   OK       5 answers recorded: D1 Yes, D2 Yes, D3 Yes, D4 No, D5 Yes; D6 left open
 work list   OK       work list items 10 | from D1 D2 D3 D5 | answered No D4 | open D6
-pages       OK       pages manager.html (stand-ins only, may leave this computer) and admin.html (names; stays on this computer) | brief: Constructed, not from a model
+pages       OK       pages manager.html (stand-ins only, may leave this computer) and admin.html (names; stays on this computer) | brief: Recorded: claude-haiku-5-5, on 2026-11-24
 
 rule  finding                                          count  decision answer  work list
 R3    enabled administrator without MFA registered         2  D1       Yes     2 items

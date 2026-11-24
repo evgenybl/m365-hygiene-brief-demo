@@ -48,8 +48,9 @@
     match the ones it holds, and its model name, date (yyyy-MM-dd) and account of how the answer was obtained are well
     formed (the label names the model and the date; how the answer was obtained goes into the report); "Constructed,
     not from a model" when it says origin "constructed" and both hashes match; otherwise "Unverified", with the reason.
-    The default answer is recordings/brief.constructed.md, written by hand to the request the shipped data gives; the
-    answers recorded from a model to earlier requests are in recordings/earlier/.
+    The default answer is recordings/brief.recorded.md, a real answer of a model to the request the shipped data gives;
+    recordings/brief.recorded-2.md is a second one, recordings/brief.constructed.md a text written by hand to the same
+    request, and recordings/earlier/ holds the answers to earlier requests.
 
     It writes brief.md, brief-report.json and a byte-for-byte copy of the summary (findings-summary.json) into a new
     folder, so that the decisions recorded later are bound to the exact summary the brief was written from.
@@ -66,7 +67,7 @@ param(
     [Parameter(Mandatory, ParameterSetName = 'Brief')] [string] $OutDir,
     [Parameter(Mandatory, ParameterSetName = 'Request')] [string] $WriteRequest,
     [Parameter(ParameterSetName = 'Brief')] [ValidateSet('Recorded', 'Anthropic')] [string] $Backend = 'Recorded',
-    [Parameter(ParameterSetName = 'Brief')] [string] $Recorded = (Join-Path $PSScriptRoot 'recordings/brief.constructed.md'),
+    [Parameter(ParameterSetName = 'Brief')] [string] $Recorded = (Join-Path $PSScriptRoot 'recordings/brief.recorded.md'),
     [Parameter(ParameterSetName = 'Brief')] [string] $RecordedMeta = '',
     [string] $Prompt = (Join-Path $PSScriptRoot 'prompt-brief.txt'),
     [Parameter(ParameterSetName = 'Brief')] [string] $FallbackTemplate = (Join-Path $PSScriptRoot 'fallback-brief.tmpl'),

@@ -597,10 +597,20 @@ Check 'the constructed brief passes the checks against the shipped tenant, and i
     $repc.ai_text_accepted -eq $true -and $repc.origin_label -eq 'Constructed, not from a model' -and $constructed.Contains('Constructed, not from a model'))
 Check 'the request built today has the sha256 the constructed brief was written against' ($repc.request_sha256 -eq $cmeta.request_sha256 -and $cmeta.origin -eq 'constructed')
 Check 'the brief folder holds a byte-for-byte copy of the summary it was written from' ((Get-FileSha256 (Join-Path $bc 'findings-summary.json')) -eq (Get-FileSha256 $dsj))
-$bd = Join-Path $OutDir 'brief-default'
-$r = Run-Pwsh @($step2, '-SummaryJson', $dsj, '-UsersCsv', $dataUsers, '-OutDir', $bd)
-Check 'with no -Recorded, step 2 uses the constructed brief, labelled Constructed' ($r.Code -eq 0 -and (Read-Json (Join-Path $bd 'brief-report.json')).answer_file -eq 'brief.constructed.md' -and
-    $r.Text.Contains('Constructed, not from a model'))
+# The two answers recorded for today's request: each passes every check and earns "Recorded". With no -Recorded,
+# step 2 uses the first.
+foreach ($rec in @('brief.recorded.md', 'brief.recorded-2.md')) {
+    $rd = Join-Path $OutDir "brief-today-$rec"
+    $a = @($step2, '-SummaryJson', $dsj, '-UsersCsv', $dataUsers, '-OutDir', $rd)
+    if ($rec -ne 'brief.recorded.md') { $a += @('-Recorded', (Join-Path $here "recordings/$rec")) }
+    $r = Run-Pwsh $a
+    $rr = if (Test-Path -LiteralPath (Join-Path $rd 'brief-report.json')) { Read-Json (Join-Path $rd 'brief-report.json') } else { $null }
+    $rm = Read-Json (Join-Path $here ('recordings/' + [IO.Path]::ChangeExtension($rec, '.meta.json')))
+    Check "the recorded answer recordings/$rec passes every check (0 problems) and earns the label Recorded against the request built today$(if ($rec -eq 'brief.recorded.md') { ', as the default' })" (
+        $r.Code -eq 0 -and $null -ne $rr -and $rr.answer_file -eq $rec -and $rr.ai_text_accepted -eq $true -and @($rr.problems).Count -eq 0 -and
+        $rr.origin_label -eq 'Recorded: claude-haiku-5-5, on 2026-11-24' -and $rr.request_sha256 -eq $rm.request_sha256 -and $rm.request_sha256 -eq $repc.request_sha256 -and
+        $rr.obtained -eq $rm.obtained -and (Get-Text (Join-Path $rd 'brief.md')) -ceq ((Get-Text (Join-Path $here "recordings/$rec")).Trim() + "`n"))
+}
 # The two answers recorded for the request before it changed, against that request, rebuilt from its two files.
 $e2Summary = Join-Path $earlier2 'findings-summary.json'; $e2Prompt = Join-Path $earlier2 'prompt-brief.txt'
 foreach ($rec in @('brief.recorded.md', 'brief.recorded-2.md')) {

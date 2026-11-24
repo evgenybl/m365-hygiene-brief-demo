@@ -60,7 +60,8 @@ and fails if not.
   digit groups separated by a space, invented stand-ins, rule ids and policy stand-ins, a stand-in in another letter
   case, a digit other than 0 to 9, a superscript, a Roman numeral, a figure too long for a decimal, a name written five
   ways, an at sign, an empty answer); the exact product names not counted; a personal value in the summary refused before
-  sending; the constructed brief accepted against the shipped tenant, and the default; a decision named twice, unknown,
+  sending; the two recorded answers to today's request pass every check and earn "Recorded" (the first is the default
+  brief); the constructed brief accepted against the shipped tenant; a decision named twice, unknown,
   left out, or named inside a sentence; the three edits an independent review made to a real answer (a question
   reworded, a question swapped and replaced, a question hidden behind "See note D6.") each refused; the label lost when
   the answer changes, when the meta file names another request, when there is none, when its date is not a date or its
@@ -126,14 +127,14 @@ Pasted from a run of `pwsh -NoProfile -File Test-Demo.ps1` with PowerShell 7.7.0
 PASS no file holds a key-shaped or token-shaped literal
 PASS no line reads like an assigned credential (token, secret, password or key = a literal)
 PASS docs/TESTS.md shows the result line of this run, pasted from a run (every result line it shows is this run's)
-RESULT 270 passed, 0 failed
+RESULT 271 passed, 0 failed
 ```
 
 The result line of the same tests with PowerShell 7.4.6 on Windows (a portable copy first on the path, so that every
 child step ran on it too), in a copy of the working tree the same day:
 
 ```text
-RESULT 270 passed, 0 failed
+RESULT 271 passed, 0 failed
 ```
 
 The version CI uses on Linux and on Windows is printed by the workflow's first step.

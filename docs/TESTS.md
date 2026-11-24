@@ -15,9 +15,9 @@ Every child step runs under the culture of the run that started it, so this test
 pwsh -NoProfile -Command "[cultureinfo]::CurrentCulture = 'de-DE'; ./Test-Demo.ps1"
 ```
 
-The tests also run on every push to `main` and on pull requests, on Linux and on Windows, together with the whole demo
-and a comparison of `examples/` with what the demo writes (`.github/workflows/tests.yml`). On Linux the workflow writes
-the examples again under another time zone and culture (`TZ`, `LANG`), which Linux honours and Windows does not.
+The workflow in `.github/workflows/tests.yml` is set to run them on every push to `main` and on pull requests, on Linux and
+on Windows, together with the whole demo and a comparison of `examples/` with what the demo writes. On Linux it writes the
+examples again with `TZ` and `LANG` set to another time zone and culture, and prints the ones it ran under.
 
 ## What they cover
 
@@ -31,7 +31,8 @@ the examples again under another time zone and culture (`TZ`, `LANG`), which Lin
   all resources that blocks Exchange ActiveSync and other clients and sets no other condition: report-only, disabled,
   "other" alone, "all" client types, one group, Office365 only, MFA instead of block, and a risk condition each fail to
   count. R8: a report-only policy created 30 days ago is not flagged and 31 days is, by its UTC date; enabled and disabled
-  policies never are; each flagged policy is a stand-in.
+  policies never are; each flagged policy is a stand-in; a report-only policy with no creation date is reported as
+  "creation date unknown", with no age.
 - **The tables**: a role named for an account whose `IsAdmin` is false, a missing `AdminRoles` column, an unknown policy
   state, a policy date that is not ISO 8601, a cost written `1,5`, `-3`, `12.5.1` or empty, and a licence listed twice
   are refused. Costs are exact (0.1 + 0.2 is written 0.3). A cell that starts like a formula is written with a leading
@@ -44,7 +45,8 @@ the examples again under another time zone and culture (`TZ`, `LANG`), which Lin
   text caught and the filled template used (an invented figure, a number at the start of a line, digit groups separated
   by a space, invented stand-ins, rule ids and policy stand-ins, a digit other than 0 to 9, a figure too long for a
   decimal, a name written five ways, an at sign, an empty answer); a personal value in the summary refused before
-  sending; the constructed brief accepted against the shipped tenant with its label; a decision named twice, unknown, or
+  sending; the two recorded answers to today's request pass every check and earn "Recorded" (the first is the default
+  brief); the constructed brief accepted against the shipped tenant with its label; a decision named twice, unknown, or
   left out; the label lost when the answer changes, when the meta file names another request, or when there is none;
   `-WriteRequest` writing exactly the request.
 - **Add-RecordedBrief.ps1**: an answer given to another request refused; an answer with CRLF and non-ASCII bytes copied
@@ -66,13 +68,15 @@ the examples again under another time zone and culture (`TZ`, `LANG`), which Lin
   `-WriteRequest` writes.
 - **The collector** against a local mock of Microsoft Graph: only GET requests, each to a path of the fixed list, the
   second page through its next link, the token in each request's header; the documented fields mapped and the stated
-  choices made; its tables read by step 1 once the costs are typed in; a throttled answer waited for; refused with nothing
+  choices made (a missing creation date left empty, and that row refused by step 1 until a person types the date); its
+  tables read by step 1 once the costs and the date are typed in; a throttled answer waited for; refused with nothing
   written: an answer 403, a next link outside the list, throttling beyond the retries, a wait above the limit, a redirect,
   any host but Graph or this computer, no token. Neither placeholder key appears in any output.
 - **The whole demo** under de-DE, every step OK and every file byte for byte the one in `examples/`; the nine cases of the
   failure gallery; the picture `docs/img/demo.svg` showing exactly the closing table a run prints.
 - **The README**: every pasted output is what its command prints, run in a copy of the repository; every embedded image
-  exists; no row of the table of what is real says Live; the collector is labelled Mock in the same words in the README,
+  exists; every quote of a real answer in the README and in `docs/DESIGN.md` is an exact slice of the file it names;
+  no row of the table of what is real says Live; the collector is labelled Mock in the same words in the README,
   in `docs/COLLECTOR.md` and in the script.
 - **Read-only by construction**: no script holds a tenant connect or change command, a mail command, or a web call other
   than the model API's POST and the collector's GET; the collector names no other method, follows no redirect and lists
@@ -90,14 +94,14 @@ Pasted from a run of `pwsh -NoProfile -File Test-Demo.ps1` with PowerShell 7.7.0
 PASS no file holds a key-shaped or token-shaped literal
 PASS no line reads like an assigned credential (token, secret, password or key = a literal)
 PASS docs/TESTS.md shows the result line of this run, pasted from a run (every result line it shows is this run's)
-RESULT 193 passed, 0 failed
+RESULT 198 passed, 0 failed
 ```
 
 The result line of the same tests with PowerShell 7.4.6 on Windows (a portable copy first on the path, so that every
 child step ran on it too), in another fresh clone the same day:
 
 ```text
-RESULT 193 passed, 0 failed
+RESULT 198 passed, 0 failed
 ```
 
 The version CI uses on Linux and on Windows is printed by the workflow's first step.

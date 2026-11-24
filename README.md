@@ -20,25 +20,24 @@ lines, from `examples/brief/brief.md`:
 
 <!-- pasted: file examples/brief/brief.md -->
 ```text
-*Constructed, not from a model: this text was written by hand to the request, so that the checks and the pages can be shown. A recorded model answer is meant to replace it.*
+The check covered 60 user accounts and 6 sign-in policies, as of 2026-11-21.
 
-On 21 November 2026 we checked 60 user accounts and 6 sign-in policies in Microsoft 365 for security gaps and unused licences.
+**Security findings**
 
-**Security findings, most urgent first**
-
-- **Administrators without a second sign-in step (MFA): 3 accounts** (user-005, user-008, user-010). An administrator account that is protected only by a password is the easiest way into the company's mail and files.
+- Administrator accounts without a second sign-in step: 3. Without that second step, a stolen password is enough to take over an account that can change the whole system.
 ```
 
-This brief is labelled **Constructed, not from a model**, here and on the pages, until a recorded model answer replaces
-it (see *Recording a real model answer*, below). The whole story ends in this table, drawn from a real run:
+This brief is a real model answer, labelled **Recorded** here and on the pages, with the caveats in *What is real here*,
+below. The whole story ends in this table, drawn from a real run:
 
 ![The closing table of the demo: each rule, its count, the manager's decision, and what reached the work list](docs/img/demo.svg)
 
 ## Try it in two minutes
 
-PowerShell 7.4 or later; nothing to install. The tests were run here with PowerShell 7.7.0 and 7.4.6 on Windows; the CI
-workflow runs on Linux and Windows and prints the version each runner uses. Each command writes into a new folder and refuses to write over one that
-exists.
+PowerShell 7.4 or later; nothing to install. The tests were run here with PowerShell 7.7.0 and 7.4.6 on Windows. The workflow
+in .github/workflows/tests.yml is set to run them on Linux and on Windows; its first step prints the PowerShell version of
+each runner, and the badge above shows the result of its last run. Each command writes into a new folder and refuses to
+write over one that exists.
 
 The whole story, on the invented tenant in `data/`:
 
@@ -47,10 +46,10 @@ The whole story, on the invented tenant in `data/`:
 $ pwsh -NoProfile -File Invoke-Demo.ps1
 Microsoft 365 hygiene demo: synthetic data, as of 2026-11-21
 findings    OK       users 60 | policies 6 | R1 7 | R2 2 | R3 3 | R4 2 | R5 1 | R6 1 | R7 1 | R8 2 | reclaimable (invented units) 169.4 | people flagged 14 | decisions D1 D2 D3 D4 D5 D6
-brief       OK       backend Recorded | text accepted True | problems 0 | summary sent to the API False | Constructed, not from a model
+brief       OK       backend Recorded | text accepted True | problems 0 | summary sent to the API False | Recorded: claude-haiku-5-5, on 2026-11-24
 decisions   OK       5 answers recorded: D1 Yes, D2 Yes, D3 Yes, D4 No, D5 Yes; D6 left open
 work list   OK       work list items 11 | from D1 D2 D3 D5 | answered No D4 | open D6
-pages       OK       pages manager.html (stand-ins only, may leave this computer) and admin.html (names; stays on this computer) | brief: Constructed, not from a model
+pages       OK       pages manager.html (stand-ins only, may leave this computer) and admin.html (names; stays on this computer) | brief: Recorded: claude-haiku-5-5, on 2026-11-24
 ```
 
 One case of the failure gallery (all nine are below):
@@ -69,7 +68,7 @@ The two report pages, again from the demo's folders; open `out-pages/manager.htm
 <!-- pasted: run -->
 ```text
 $ pwsh -NoProfile -File New-HygieneReport.ps1 -FindingsDir out-demo/findings -BriefDir out-demo/brief -WorklistDir out-demo/worklist -UsersCsv data/users.synthetic.csv -DataKind Synthetic -OutDir out-pages
-pages manager.html (stand-ins only, may leave this computer) and admin.html (names; stays on this computer) | brief: Constructed, not from a model
+pages manager.html (stand-ins only, may leave this computer) and admin.html (names; stays on this computer) | brief: Recorded: claude-haiku-5-5, on 2026-11-24
 ```
 
 The tests (what they cover, and the last lines of a run, are in [docs/TESTS.md](docs/TESTS.md)):
@@ -106,6 +105,31 @@ flowchart LR
    in the summary, every stand-in and rule id must be the summary's own, every decision id exactly once, and no name or
    address from the users table may appear. A brief that fails is not used; a fixed template is filled with the script's
    own figures instead, and the report says why.
+
+### What the checks did not catch in the two real answers
+
+Both recorded answers in `recordings/` pass every check above. Read by a person, they show three things no check looks for.
+
+<!-- quotes: recordings/brief.recorded.md -->
+The first answer does not say that the finding about Global Administrators names no person, which the request asks for:
+"Global Administrator accounts: 5, where the limit is 4. Each extra top-level administrator is another way in and another person who can change everything."
+It does say so for the two policy findings: "This is a tenant-wide setting and names no person." and "These are policy settings and name no person."
+No check looks for that sentence.
+
+<!-- quotes: recordings/brief.recorded-2.md -->
+The second answer writes most of its counts in words, as in "Three administrator accounts have no second sign-in step (MFA) set up.",
+and so with "Five accounts", "Two guest accounts" and "Seven enabled accounts". The figure check reads digits only, so
+those counts were not checked by code.
+
+<!-- quotes: recordings/brief.recorded.md -->
+Both answers add a reason to each finding in their own words. In the first: "a stolen password is enough to take over an account that can change the whole system".
+
+<!-- quotes: recordings/brief.recorded-2.md -->
+In the second: "they give a false sense of protection". These reasons are reasonable, and nobody verified them.
+
+A manager's brief is read by a person before it reaches the manager, because the checks prove only what they test
+(figures written in digits, ids, stand-ins and names), not that each sentence is right or complete.
+
 3. **`Set-BriefDecision.ps1`** records the manager's answer to one decision (Yes, or No with a reason), with the name the
    person types and the time, bound to that exact summary.
 4. **`New-AdminWorklist.ps1`** writes the administrator's work list: the accounts and items of the decisions answered
@@ -127,7 +151,7 @@ the documentation page it was written from, the permission and the licence it ne
 | R5 | An enabled, licensed member who never signed in, created more than 30 days ago | licence cost |
 | R6 | More than 4 accounts hold the Global Administrator role, enabled or not (one finding about the tenant) | security |
 | R7 | No enabled Conditional Access policy blocks legacy authentication (older sign-in methods that cannot ask for a second step) for all users and all resources (one finding about the tenant) | security |
-| R8 | A Conditional Access policy left in report-only mode (it records what it would do and enforces nothing) for more than 30 days after it was created | security |
+| R8 | A Conditional Access policy left in report-only mode (it records what it would do and enforces nothing) for more than 30 days after it was created, or with no creation date (reported as unknown, never given an age) | security |
 
 A user who never signed in is judged by R5 or R4, never by R1, so no one is counted twice for the same cost. A date is
 `yyyy-MM-dd`, or an ISO 8601 timestamp with `Z` or an offset, which counts as its UTC date; any other value stops the run
@@ -139,9 +163,11 @@ units invented for the demo. The reasons behind each choice are in [docs/DESIGN.
 | Path | Label | What was actually run |
 |---|---|---|
 | The eight rules and their refusals | Local | Run by the tests and the demo, on invented tables |
-| The checks on the brief | Local | Run by the tests on dozens of wrong texts, and on the shipped brief |
+| The checks on the brief | Local | Run by the tests on dozens of wrong texts, and on every saved answer |
 | The decisions, the work list and the two pages | Local | Run by the tests and the demo |
-| The brief shipped in `recordings/` | Constructed | Written by hand to the current request, not from a model; checked like a model's text |
+| The brief the demo uses, `recordings/brief.recorded.md` | Recorded | A real answer of one small model (claude-haiku-5-5) to the request the shipped data gives, passed by every check. It was given the request through a Claude Code subagent, which also runs under its harness's own system prompt, so it is not the live path's call. Its sha256 shows that the file has not changed since it was added and which request it answers; that the model wrote it rests on the author's record |
+| A second answer, `recordings/brief.recorded-2.md` | Recorded | Obtained the same way, also passed by every check; not used by the demo |
+| `recordings/brief.constructed.md` | Constructed | Written by hand, not from a model; used only by `Test-Demo.ps1`, as a known text: for the checks on decision ids, the label tests, the tests of `Add-RecordedBrief.ps1`, the decisions, work list and pages tests, and as the mock model's reply |
 | The two earlier answers in `recordings/earlier/` | Recorded | Real answers of a small Claude model to the earlier, five-rule request; a test rebuilds that request and checks its sha256 |
 | The live model path (`-Backend Anthropic`) | Mock | Run against a local mock of the Messages API only |
 | The collector (`Export-TenantSnapshot.ps1`) | Mock | Mock: written from Microsoft's documentation, tested against a local mock, never run against a tenant |
@@ -150,11 +176,11 @@ This has not been run against a tenant.
 
 **What a command you can run shows:** that the rules, the checks, the refusals, the decisions, the work list and the
 pages behave as described, on the invented data; that `examples/` is exactly what the demo writes, in any culture; that
-the collector sends only GET requests to its fixed paths, as a mock records them; that the earlier answers match the
-request they were given.
+the collector sends only GET requests to its fixed paths, as a mock records them; that each recorded answer is the file
+added and answers the request it names.
 
-**What rests on the author's word:** that the earlier answers came from the model and by the route their meta files
-name; and that neither the collector nor the live model path was ever run against the real services.
+**What rests on the author's word:** that the recorded answers came from the model and by the route their meta files name;
+and that neither the collector nor the live model path was ever run against the real services.
 
 ## What can go wrong, and what happens
 
@@ -171,11 +197,11 @@ case bad-date: the second row of the users table has a day-first date, 21/08/202
 findings    OK       REFUSED (exit 2): row 2: LastSignInDate is not yyyy-MM-dd or an ISO 8601 timestamp with Z or an offset
 result      OK       nothing written: yes
 case bad-date: as expected
-case invented-figure: the brief adds a sentence with a figure the summary does not hold
+case invented-figure: the recorded brief, with a sentence added that holds a figure the summary does not hold
 brief       OK       text refused: figures not in the summary: 500
 result      OK       brief.md is the fixed template with the script's own figures, and brief-report.json says why
 case invented-figure: as expected
-case missing-decision: the brief leaves out the line of decision D4
+case missing-decision: the recorded brief, with the line of decision D4 taken out
 brief       OK       text refused: a decision left out: D4
 result      OK       brief.md is the fixed template with the script's own figures, and brief-report.json says why
 case missing-decision: as expected
@@ -207,8 +233,8 @@ cases 9 | as expected 9 | not as expected 0
 
 ## Recording a real model answer
 
-The request is the fixed prompt and the stand-in summary, nothing else. This writes it to a file, exactly as it would be
-sent:
+This is how the two answers in `recordings/` were added. The request is the fixed prompt and the stand-in summary,
+nothing else. This writes it to a file, exactly as it would be sent:
 
 <!-- pasted: run -->
 ```text
@@ -221,10 +247,11 @@ which copies the answer byte for byte, writes its meta file (origin "recorded", 
 and refuses if the request file is not the request the script builds today:
 
 ```text
-pwsh -NoProfile -File Add-RecordedBrief.ps1 -Answer answer.md -RequestFile request.txt -SummaryJson examples/findings/findings-summary.json -Model <model name> -Obtained "<how it was obtained>" -RecordedOn <yyyy-MM-dd> -Name brief.recorded
+pwsh -NoProfile -File Add-RecordedBrief.ps1 -Answer answer.md -RequestFile request.txt -SummaryJson examples/findings/findings-summary.json -Model <model name> -Obtained "<how it was obtained>" -RecordedOn <yyyy-MM-dd> -Name brief.recorded-3
 ```
 
-Then pass `-Recorded recordings/brief.recorded.md` to `New-ManagerBrief.ps1`. The live path is `-Backend Anthropic`, with
+Then pass `-Recorded recordings/brief.recorded-3.md` to `New-ManagerBrief.ps1`; without it, the brief is the first recording,
+`recordings/brief.recorded.md`. The live path is `-Backend Anthropic`, with
 the key in the `ANTHROPIC_API_KEY` environment variable; it is never printed or written.
 
 ## Limits, stated plainly
@@ -234,22 +261,26 @@ the key in the `ANTHROPIC_API_KEY` environment variable; it is never printed or 
   tuned to the tenant.
 - **R6 to R8 depend on tables a real tenant fills differently.** Role holders that are groups, eligible role
   assignments, policies scoped to groups or with exclusions, and policies switched into report-only mode after they were
-  created all need a person's reading; R8 counts days from a policy's creation.
+  created all need a person's reading; R8 counts days from a policy's creation, and reports a policy with no creation
+  date as of unknown age.
 - **The collector's first real run would have to confirm its permissions, its paging and its answers on a live tenant**
   (the list is at the end of [docs/COLLECTOR.md](docs/COLLECTOR.md)). It reads the documentation's account of each
   request, not a tenant.
 - **A decision records the name a person types.** It is not checked against any directory and proves nothing about who
-  typed it.
+  typed it. The manager's page shows that name as typed, so a manager who is also in the users table appears there by name,
+  as the one who decided.
 - **The summary is pseudonymised, not anonymous.** It still carries each flagged person's department, licences and days
   since sign-in, and in a small tenant that can point to one person.
-- **The checks on the brief have gaps.** They do not catch a number written in words, a right number attached to the
+- **The checks on the brief have gaps.** They do not catch a number written in words (the second recorded answer writes
+  most of its counts so; see *What the checks did not catch in the two real answers*), a sentence the request asked for and
+  the answer left out, a right number attached to the
   wrong finding, or a percentage or scale word around a valid number ("100%", "169.4 thousand"). Only names the users
   table holds are looked for; a part of a name that the request itself uses as a word, and the number words one to ten,
   are not; nor, before sending, is a display name that is also a department name.
 - **The label "Recorded" proves that the answer and the request are the ones in the meta file,** not who or what wrote
   the answer.
 - **The live model path was tested against a local mock only**, not against the real service.
-- **One recorded brief is not a measure of quality.** Whether the wording is right for a given manager is a person's call.
+- **Two recorded briefs are not a measure of quality.** Whether the wording is right for a given manager is a person's call.
 - **The costs are invented units.** No saving in money is shown or promised.
 - This is a demonstration of a design, not a product and not a record of client work.
 
@@ -258,7 +289,7 @@ the key in the `ANTHROPIC_API_KEY` environment variable; it is never printed or 
 The rules follow the author's own earlier administration scripts and checklist, rewritten for this repository. The
 design is in [docs/DESIGN.md](docs/DESIGN.md), the tests in [docs/TESTS.md](docs/TESTS.md), the collector's sources in
 [docs/COLLECTOR.md](docs/COLLECTOR.md). `examples/` is the real output of the whole story; `Update-Examples.ps1` writes it
-again, and CI fails on any difference. The invented tenant in `data/` is what `New-SyntheticTenant.ps1` writes for the
+again, and the CI workflow is set to fail on any difference. The invented tenant in `data/` is what `New-SyntheticTenant.ps1` writes for the
 seed named in `data/tenant-source.txt`.
 
 ## Usage conditions

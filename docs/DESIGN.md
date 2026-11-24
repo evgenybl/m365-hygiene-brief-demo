@@ -30,13 +30,47 @@ A saved answer has a meta file beside it. The pages say "Recorded" only when the
 the answer's sha256 and the request's sha256 match the ones it holds; "Constructed, not from a model" for a text written
 by hand to the current request; otherwise "Unverified", with the reason. The hashes prove that the files are the ones
 recorded and that the request is the one the script builds today. That the answer came from the named model rests on the
-word of whoever recorded it.
+word of whoever recorded it. The label names the model and the date; the meta file's account of how the answer was
+obtained goes into the brief's report and onto the pages.
 
-The brief shipped today is constructed: the request changed with the three new rules and the decisions, so the two real
-answers recorded for the earlier request no longer match it. They are kept in `recordings/earlier/` with the earlier
-prompt and summary, and a test rebuilds that earlier request and checks its sha256, so they still earn their label
-against the request they answered. One of them is refused by the figure check, which is kept as a lesson: the check
-prefers the fixed template to a text it cannot confirm.
+The demo's brief is `recordings/brief.recorded.md`, a real answer of one small model (claude-haiku-5-5) to the request
+the shipped data gives; `recordings/brief.recorded-2.md` is a second answer to the same request. Both were given the
+request through a Claude Code subagent, which also runs under its harness's own system prompt, so neither is the live
+path's call. Both pass every check, and a test checks that each still earns its label.
+
+`recordings/brief.constructed.md` is written by hand and labelled "Constructed, not from a model". Only the tests use it,
+as a known text: for the checks on decision ids, the label tests, the tests of `Add-RecordedBrief.ps1`, the tests of the
+decisions, the work list and the pages, and as the reply of the mocked model API.
+
+The two answers recorded for the earlier, five-rule request are kept in `recordings/earlier/` with the earlier prompt
+and summary; a test rebuilds that request and checks its sha256, so they still earn their label against the request
+they answered. One of them is refused by the figure check, which is kept as a lesson: the check prefers the fixed
+template to a text it cannot confirm.
+
+## Limits of the checks, seen in the two real answers
+
+Both recorded answers to today's request pass every check. Read by a person, they show what the checks do not test.
+
+<!-- quotes: recordings/brief.recorded.md -->
+A sentence the request asks for can be missing. The first answer does not say that the finding about Global
+Administrators names no person: "Global Administrator accounts: 5, where the limit is 4. Each extra top-level administrator is another way in and another person who can change everything."
+It says so for the two policy findings: "This is a tenant-wide setting and names no person." and "These are policy settings and name no person."
+The check has no rule for that sentence.
+
+<!-- quotes: recordings/brief.recorded-2.md -->
+A count written in words is not checked. The second answer writes most of its counts so: "Three administrator accounts have no second sign-in step (MFA) set up.",
+"Five accounts", "Two guest accounts", "Seven enabled accounts". The figure check reads digits only, so those counts were
+not checked by code.
+
+<!-- quotes: recordings/brief.recorded.md -->
+A reason given in the model's own words is not checked. The first answer: "a stolen password is enough to take over an account that can change the whole system".
+
+<!-- quotes: recordings/brief.recorded-2.md -->
+The second: "they give a false sense of protection". Both are reasonable, and nobody verified them.
+
+No code check was added for these: they are about meaning, and a rule for one wording would miss the next. A manager's
+brief is read by a person before it reaches the manager, because the checks prove only what they test (figures written
+in digits, ids, stand-ins and names), not that each sentence is right or complete.
 
 ## People and places in the outputs
 
@@ -76,7 +110,8 @@ prefers the fixed template to a text it cannot confirm.
   all users does not count, because it blocks only when the risk condition holds; the policies table carries the other
   conditions for that reason.
 - **R8** counts days from the policy's creation date, the only date the policy holds; a policy switched into report-only
-  mode later is counted from its creation.
+  mode later is counted from its creation. A policy with no creation date is reported as of unknown age; no date is
+  invented for it.
 
 ## The collector
 

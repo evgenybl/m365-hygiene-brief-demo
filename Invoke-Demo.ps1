@@ -121,7 +121,7 @@ function Invoke-Story([string] $Dir) {
         R3 = 'enabled administrator without MFA registered'
         R6 = 'more than {0} global administrators' -f $t['global_admin_limit']
         R7 = 'legacy authentication not blocked'
-        R8 = 'over {0} days old, still in report-only mode' -f $t['report_only_days']
+        R8 = 'created more than {0} days ago, still report-only' -f $t['report_only_days']
         R4 = 'guest, no sign-in for {0} days or none on record' -f $t['stale_days']
         R1 = 'licensed, no sign-in for over {0} days' -f $t['stale_days']
         R2 = 'disabled, still licensed'

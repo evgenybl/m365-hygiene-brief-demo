@@ -9,7 +9,7 @@ rule  finding                                          count  decision answer  w
 R3    enabled administrator without MFA registered         2  D1       Yes     2 items
 R6    more than 4 global administrators                    1  D2       Yes     5 items
 R7    legacy authentication not blocked                    1  D3       Yes     1 item
-R8    over 30 days old, still in report-only mode          2  D4       No      -
+R8    created more than 30 days ago, still report-only     2  D4       No      -
 R4    guest, no sign-in for 90 days or none on record      2  D5       Yes     2 items
 R1    licensed, no sign-in for over 90 days                7  D6       open    -
 R2    disabled, still licensed                             2  D6       open    -

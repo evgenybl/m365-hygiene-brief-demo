@@ -9,7 +9,7 @@
 <text x="16" y="82">R3    enabled administrator without MFA registered         2  D1       Yes     2 items</text>
 <text x="16" y="101">R6    more than 4 global administrators                    1  D2       Yes     5 items</text>
 <text x="16" y="120">R7    legacy authentication not blocked                    1  D3       Yes     1 item</text>
-<text x="16" y="139">R8    over 30 days old, still in report-only mode          2  D4       No      -</text>
+<text x="16" y="139">R8    created more than 30 days ago, still report-only     2  D4       No      -</text>
 <text x="16" y="158">R4    guest, no sign-in for 90 days or none on record      2  D5       Yes     2 items</text>
 <text x="16" y="177">R1    licensed, no sign-in for over 90 days                7  D6       open    -</text>
 <text x="16" y="196">R2    disabled, still licensed                             2  D6       open    -</text>

@@ -33,7 +33,8 @@
          block, and it sets no other condition (OtherConditions is empty); excluded
          users are allowed; one finding about the tenant                              (security, tenant)
       R8 a policy in report-only mode (enabledForReportingButNotEnforced) created more
-         than 30 days ago; one finding per policy, with no person in it               (security, policy)
+         than 30 days ago, or with no creation date, which is reported as unknown and
+         never given an age; one finding per policy, with no person in it            (security, policy)
     A user with no sign-in at all is judged by R5 or R4, never by R1, so no one is counted twice for the same cost.
 
     The decisions are fixed here, not by a model: D1 (R3), D2 (R6), D3 (R7), D4 (R8), D5 (R4), D6 (R1, R2, R5). A
@@ -43,7 +44,7 @@
     AccountEnabled, IsAdmin and MfaRegistered are true or false, in any letter case. AdminRoles lists role names
     separated by ";", and a role there needs IsAdmin true. A cost is a decimal number with "." as the separator. Any
     other value is refused (exit 2) with its row number (the first row after the header is row 1), and nothing is
-    written. Costs are exact decimals throughout.
+    written. A user's CreatedDate is required; a policy's CreatedDate may be empty (unknown). Costs are exact decimals throughout.
 
     It reads files only. It connects to no tenant and changes nothing.
 
@@ -172,18 +173,20 @@ $prow = 0
 foreach ($p in $policies) {
     $prow++
     if ($p.State -notin $states) { Stop-Refused "policies row ${prow}: State must be enabled, disabled or enabledForReportingButNotEnforced" }
-    $created = Get-Day $p.CreatedDate 'CreatedDate' $prow 'policies '
-    $days = [int]($asOfDate - $created).TotalDays
+    $created = if ($p.CreatedDate) { Get-Day $p.CreatedDate 'CreatedDate' $prow 'policies ' } else { $null }
+    $days = if ($null -ne $created) { [int]($asOfDate - $created).TotalDays } else { $null }
     $apps = @(Split-List $p.ClientAppTypes)
     $legacy = ('exchangeActiveSync' -in $apps) -and ('other' -in $apps)
     if ($p.State -eq 'enabled' -and $legacy -and ('All' -in @(Split-List $p.IncludeUsers)) -and
         ('All' -in @(Split-List $p.IncludeApplications)) -and ('block' -in @(Split-List $p.GrantControls)) -and
         @(Split-List $p.OtherConditions).Count -eq 0) { $blockers++ }
-    if ($p.State -eq 'enabledForReportingButNotEnforced' -and $days -gt $ReportOnlyMaxDays) {
+    # A report-only policy with no creation date is reported as such, never given an invented age.
+    if ($p.State -eq 'enabledForReportingButNotEnforced' -and ($null -eq $days -or $days -gt $ReportOnlyMaxDays)) {
         $reportOnly.Add([pscustomobject]@{ PolicyId = $p.PolicyId; Name = $p.DisplayName; Days = $days
-            Created = $created.ToString('yyyy-MM-dd', $inv) })
+            Created = $(if ($null -ne $created) { $created.ToString('yyyy-MM-dd', $inv) } else { '' }) })
     }
 }
+if (@($reportOnly | Where-Object { $null -eq $_.Days }).Count) { $rules['R8'] += ', or with no creation date' }
 
 # Stand-ins: one per person, in order of first appearance, stable across rules; one per report-only policy.
 $ref = [ordered]@{}
@@ -216,7 +219,8 @@ if ($r7) {
 }
 foreach ($p in $reportOnly) {
     $adminRows.Add([ordered]@{ Rule = 'R8'; Name = $p.Name; MonthlyCost = '0'; Scope = 'policy'
-        Detail = ('Policy id {0}; report-only, created {1}, {2} days ago' -f $p.PolicyId, $p.Created, $p.Days) })
+        Detail = $(if ($null -eq $p.Days) { 'Policy id {0}; report-only, creation date unknown' -f $p.PolicyId } else {
+            'Policy id {0}; report-only, created {1}, {2} days ago' -f $p.PolicyId, $p.Created, $p.Days }) })
 }
 $adminColumns = @('Rule', 'Upn', 'Name', 'Department', 'DaysSinceSignIn', 'AccountAgeDays', 'Licenses', 'MonthlyCost', 'Scope', 'Detail')
 $adminCsv = ConvertTo-CsvText $adminRows.ToArray() $adminColumns
@@ -225,7 +229,8 @@ $summaryRules = foreach ($r in $rules.Keys) {
     $items = @(switch ($r) {
         'R6' { if ($r6) { [ordered]@{ ref = 'tenant'; global_administrators = $globalAdmins.Count; limit = $GlobalAdminMax } } }
         'R7' { if ($r7) { [ordered]@{ ref = 'tenant'; policies_checked = $policies.Count } } }
-        'R8' { foreach ($p in $reportOnly) { [ordered]@{ ref = $policyRef[$p.PolicyId]; days_since_created = $p.Days } } }
+        'R8' { foreach ($p in $reportOnly) { if ($null -eq $p.Days) { [ordered]@{ ref = $policyRef[$p.PolicyId]; days_since_created = $null; creation_date = 'unknown' } }
+            else { [ordered]@{ ref = $policyRef[$p.PolicyId]; days_since_created = $p.Days } } } }
         default {
             foreach ($x in @($found | Where-Object Rule -eq $r)) {
                 [ordered]@{ ref = $ref[$x.Upn]; department = $(if ($x.Department) { $x.Department } else { '(guest)' })

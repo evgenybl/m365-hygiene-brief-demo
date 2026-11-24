@@ -32,8 +32,10 @@
     Mapping choices, each stated in docs/COLLECTOR.md: the last sign-in is signInActivity.lastSuccessfulSignInDateTime
     (successful sign-ins only); a user missing from the registration report (the documentation says it does not list
     disabled users) is written as MFA not registered; IsAdmin comes from the report's isAdmin or from holding Global
-    Administrator; a user with no createdDateTime (the documentation says this happens for some users created before
-    June 2018) is written as created on 2018-06-01, and counted in the report.
+    Administrator; a user or a policy with no createdDateTime (the documentation says this happens for some users created
+    before June 2018) gets an empty cell, never an invented date, and the report counts such users. Step 1 then refuses a
+    user row with no creation date, by its row number, so that a person supplies it; a report-only policy with none is
+    reported by R8 as of unknown age.
 
 .EXAMPLE
     pwsh -File Export-TenantSnapshot.ps1 -OutDir <new folder>
@@ -153,7 +155,7 @@ $users = @(foreach ($u in $got.users.Items) {
     $reg = if ($registration.ContainsKey($id)) { $registration[$id] } else { $notInReport++; $null }
     $isGa = $globalAdmins.ContainsKey($id)
     $created = ConvertTo-Stamp (Get-Field $u 'createdDateTime')
-    if (-not $created) { $noCreated++; $created = '2018-06-01' }
+    if (-not $created) { $noCreated++ }
     $licences = @(@(Get-Field $u 'assignedLicenses') | Where-Object { $_ } | ForEach-Object {
         $sku = [string](Get-Field $_ 'skuId'); if ($skuName.ContainsKey($sku) -and $skuName[$sku]) { $skuName[$sku] } else { $sku } })
     [ordered]@{
@@ -186,7 +188,7 @@ $report = [ordered]@{
     users = @($users).Count; licences = @($skus).Count; policies = @($policies).Count
     global_administrator_holders_that_are_not_users = $nonUserHolders
     users_not_in_the_registration_report = $notInReport
-    users_without_created_date_written_as_2018_06_01 = $noCreated
+    users_without_created_date_left_empty = $noCreated
     throttled_waits = $script:waits
 }
 

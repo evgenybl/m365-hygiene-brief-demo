@@ -39,11 +39,12 @@ What the pages settled:
 - An empty value is written as no sign-in: the page's example shows `""` and `"0001-01-01T00:00:00Z"`, and the user page
   says `signInActivity` "isn't returned for a user who never signed in or last signed in before April 2020".
 - `createdDateTime` "is `null` for some users created before June 2018 and on-premises users that were synced to Microsoft
-  Entra ID before June 2018". Such a user is written as created on 2018-06-01, a date before which, on that statement,
-  they were created; the snapshot report counts them. This is a reading of the page, not a fact the page states.
+  Entra ID before June 2018". Such a user's CreatedDate is left empty, and the snapshot report counts them. No date is
+  written in its place: `Get-TenantHygieneFindings.ps1` then refuses that row, with its row number, so that a person
+  supplies the date from another source or removes the row.
 
-Not settled by the pages: whether delegated `User.ReadBasic.All` returns every property selected here. The collector is
-written for a token with `User.Read.All` and `AuditLog.Read.All`.
+The collector is written for a token with `User.Read.All` and `AuditLog.Read.All`; whether less would do is in the last
+section.
 
 ### 2. Licences
 
@@ -120,7 +121,8 @@ What the pages settled:
   exclusion does not stop a policy from counting. A policy that sets another condition (a risk level, a location, a
   platform ...) blocks only part of the sign-ins, so it does not count.
 - R8 counts days from `createdDateTime`: the resource holds `createdDateTime` and `modifiedDateTime`, and no date of a
-  switch into report-only mode.
+  switch into report-only mode. A policy whose `createdDateTime` is missing gets an empty cell, and R8 reports it, if it is
+  in report-only mode, as of unknown age; no age is invented for it.
 
 ## Paging, throttling, errors
 
@@ -142,13 +144,30 @@ The token is read from the `GRAPH_ACCESS_TOKEN` environment variable, never from
 written. How to obtain one is outside this repository. `-GraphBase` accepts `https://graph.microsoft.com`, or a server on
 this computer for the tests, and nothing else, so the token cannot be sent to another host.
 
-## What a first real run would have to check
+## Not settled by the documentation, to be checked on a first real run
 
-- That a token with `User.Read.All`, `AuditLog.Read.All`, `LicenseAssignment.Read.All`, `RoleManagement.Read.Directory`
-  and `Policy.Read.All` is enough, and whether fewer would do (for example `User.ReadBasic.All`, delegated).
-- That paging works over more than one real page, with `$top=500`.
-- How the answers look in a tenant without Microsoft Entra ID P1 or P2: the pages name the licence, not the answer.
-- Whether eligible role assignments appear in the role assignment list, and how a group holding the role should count.
-- The value shapes: a missing `signInActivity`, an empty or `0001-01-01` date, a `null` `createdDateTime`, a disabled user
-  missing from the registration report.
+Each point below is something the pages read do not settle. Nothing here guesses the answer; each is to be checked on a
+first run against a real tenant.
+
+- **Whether the delegated permission named is enough.** The users list page gives `User.ReadBasic.All` first among the
+  delegated permissions, "from least to most privileged", but does not say whether it returns every property selected
+  here (`accountEnabled`, `assignedLicenses`, `createdDateTime`, `department`, `userType` and `signInActivity`, which each
+  require `$select`). The collector is written for `User.Read.All` and `AuditLog.Read.All`.
+- **Whether eligible role assignments appear in the list.** The role assignments page does not say whether eligible
+  assignments (Privileged Identity Management) are part of `roleManagement/directory/roleAssignments`. R6 counts only
+  what the list holds, and a group that holds the role is counted in the snapshot report, not expanded into its members.
+- **Whether the licence sentence covers the registration report's API.** The resource page points to "Authentication
+  Methods Activity: Permissions and licenses", which says "A Microsoft Entra ID P1 or P2 license is required to access
+  Usage and insights." It does not name the `userRegistrationDetails` API in that sentence, and the API page names no
+  licence.
+- **The missing `createdDateTime`.** The user page says it "is `null` for some users created before June 2018 and
+  on-premises users that were synced to Microsoft Entra ID before June 2018". The collector writes an empty cell for such
+  a user, not a date, because any date written there would be an assumption the data cannot back; step 1 then refuses
+  the row by its number, so that a person supplies the date. A policy with no `createdDateTime` gets an empty cell too,
+  and R8 reports it as of unknown age.
+- **The other answers of a real tenant:** a token with the five application permissions above (`User.Read.All`,
+  `AuditLog.Read.All`, `LicenseAssignment.Read.All`, `RoleManagement.Read.Directory`, `Policy.Read.All`); paging over more
+  than one real page with `$top=500`; how the answers look in a tenant without Microsoft Entra ID P1 or P2 (the pages name
+  the licence, not the answer); and the value shapes of a missing `signInActivity`, an empty or `0001-01-01` date, and a
+  disabled user missing from the registration report.
 - National clouds are not supported: `-GraphBase` refuses any host but `graph.microsoft.com`.

@@ -1249,7 +1249,18 @@ Check "the README states how many wrong texts the tests feed to the checks on th
     $readmeText.Contains("Run by the tests on $($script:wrongTexts) wrong texts"))
 $images = @([regex]::Matches($readmeText, '!\[[^\]]*\]\(([^)\s]+)\)|<img [^>]*src="([^"]+)"') | ForEach-Object { if ($_.Groups[1].Success) { $_.Groups[1].Value } else { $_.Groups[2].Value } } |
     Where-Object { $_ -notmatch '^https?://' })
-Check 'every image the README embeds from the repository exists' ($images.Count -ge 1 -and @($images | Where-Object { -not (Test-Path -LiteralPath (Join-Path $here $_)) }).Count -eq 0)
+# The picture of the manager's page: no test can look at it, so the caption says how and from which commit it was made,
+# and the file must be a PNG of the size the caption gives (bytes 16 to 23 of a PNG are its width and height).
+$shot = Join-Path $here 'docs/img/manager-page.png'
+$shotHead = if (Test-Path -LiteralPath $shot) { @([IO.File]::ReadAllBytes($shot) | Select-Object -First 24) } else { @() }
+$shotOk = $shotHead.Count -eq 24 -and (($shotHead[0..7] -join ' ') -eq '137 80 78 71 13 10 26 10') -and
+    (($shotHead[16] * 16777216 + $shotHead[17] * 65536 + $shotHead[18] * 256 + $shotHead[19]) -eq 1280) -and
+    (($shotHead[20] * 16777216 + $shotHead[21] * 65536 + $shotHead[22] * 256 + $shotHead[23]) -eq 900)
+Check 'every image the README embeds from the repository exists, and the picture of the manager''s page is the size its caption gives' (
+    $images.Count -ge 2 -and @($images | Where-Object { -not (Test-Path -LiteralPath (Join-Path $here $_)) }).Count -eq 0 -and
+    $images -contains 'docs/img/manager-page.png' -and $shotOk -and
+    $readmeText.Contains('*A capture of `examples/pages/manager.html`, the top of the page at 1280 by 900, in a headless browser with no network,') -and
+    $readmeText.Contains('taken on 25 November 2026 from the page as it is at commit 5ac23d5.'))
 $realRows = @($readme | Where-Object { $_ -match '^\| .+ \| (Local|Recorded|Constructed|Mock|Live)\b' })
 Check 'the README''s table of what is real has no row marked Live, and says this has not been run against a tenant' ($realRows.Count -ge 5 -and
     @($realRows | Where-Object { $_ -match '\| Live\b' }).Count -eq 0 -and $readmeText.Contains('This has not been run against a tenant.'))

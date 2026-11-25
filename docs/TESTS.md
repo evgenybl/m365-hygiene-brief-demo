@@ -105,7 +105,8 @@ and fails if not.
 - **The whole demo** under de-DE, every step OK and every file byte for byte the one in `examples/`; the nine cases of the
   failure gallery; the picture `docs/img/demo.svg` showing exactly the closing table a run prints.
 - **The README**: every pasted output is what its command prints, run in a copy of the repository; the number of wrong
-  texts it states is the number this run fed to the checks; every embedded image exists; every quote of a real answer
+  texts it states is the number this run fed to the checks; every embedded image exists, and the picture of the manager's page has a
+  caption that says how it was made and is a PNG of the size the caption gives; every quote of a real answer
   in the README and in `docs/DESIGN.md` is an exact slice of the file it names; no row of the table of what is real says
   Live; the collector is labelled Mock in the same words in the README, in `docs/COLLECTOR.md`, in the collector section
   of `docs/DESIGN.md`, and in the header of every script that mentions the collector.

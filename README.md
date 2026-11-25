@@ -38,6 +38,14 @@ below. The whole story ends in this table, drawn from a real run:
 
 ![The closing table of the demo: each rule, its count, the manager's decision, and what reached the work list](docs/img/demo.svg)
 
+The top of the manager's page, as a browser shows it:
+
+![The top of the manager's page: labels for the date, the synthetic data and the recorded brief, then the brief with its security findings and the first cost findings](docs/img/manager-page.png)
+
+*A capture of `examples/pages/manager.html`, the top of the page at 1280 by 900, in a headless browser with no network,
+taken on 25 November 2026 from the page as it is at commit 5ac23d5. The page is written by `New-HygieneReport.ps1`; CI
+does not make the picture again, so if the two ever differ, the page is right.*
+
 ## Try it in two minutes
 
 PowerShell 7.4 or later; nothing to install. The tests were run here with PowerShell 7.7.0 and 7.4.6 on Windows. The workflow
